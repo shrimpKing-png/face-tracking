@@ -9,9 +9,11 @@ This package encapsulates different tracking strategies:
 
 from .dlib_detector import DlibDetector
 from .optical_flow import OpticalFlowTracker
+from .mediapipe_detector import MediaPipeDetector
 
 # __all__ defines the public API of the package
 __all__ = [
     'DlibDetector',
-    'OpticalFlowTracker'
+    'OpticalFlowTracker',
+    'MediaPipeDetector'
 ]

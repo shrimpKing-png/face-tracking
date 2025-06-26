@@ -162,7 +162,7 @@ class MaskGenerator:
         cv.destroyAllWindows()
         return selected_indices
 
-    def select_facial_roi(self, img, dlib_detector):
+    def select_facial_roi(self, img, detector):
         """
         Complete workflow: extract faces and select ROI from landmarks
 
@@ -173,7 +173,7 @@ class MaskGenerator:
         """
         img = normalize_frame(img, np.ones_like(img))
         # Extract faces and landmarks
-        result = dlib_detector.extract_faces(img)
+        result = detector.extract_faces(img)
 
         if result[0] is None:
             print("No faces detected!")

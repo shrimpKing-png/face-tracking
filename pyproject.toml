@@ -10,7 +10,8 @@ requires-python = ">=3.12"
 dependencies = [
     "opencv-python (>=4.10.0,<5.0.0.0)",
     "pandas (>=2.3.0,<3.0.0)",
-    "dlib (>=18.0.0)"
+    "dlib @ file:///Users/gavinpaull/Documents/PycharmProjects/ASC_Data_Processing/SF-TL54/Dlib_Windows_Python3.12-main/dlib-20.0.99-cp312-cp312-macosx_15_0_arm64.whl",
+    "mediapipe (>=0.10.21,<0.11.0)"
 ]
 
 

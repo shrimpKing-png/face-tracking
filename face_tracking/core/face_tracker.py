@@ -9,6 +9,7 @@ import numpy as np
 import cv2 as cv
 from typing import List
 
+from face_tracking import MediaPipeDetector
 # Using relative imports for library structure
 from face_tracking.config import settings as cfg
 from face_tracking.tracking.dlib_detector import DlibDetector
@@ -31,7 +32,7 @@ class FaceTracker:
     """
 
     def __init__(self, use_optical_flow: bool = cfg.USE_OPTICAL_FLOW,
-                 use_moving_average: bool = cfg.USE_MOVING_AVERAGE):
+                 use_moving_average: bool = cfg.USE_MOVING_AVERAGE, landmark_detector='dlib'):
         """
         Initializes the FaceTracker and its components.
 
@@ -48,7 +49,7 @@ class FaceTracker:
 
         # --- Component Initialization ---
         # Each component has a single, well-defined responsibility.
-        self.detector = DlibDetector()
+        self.detector = DlibDetector() if landmark_detector == 'dlib' else MediaPipeDetector()
         self.optical_flow = OpticalFlowTracker(lk_params=cfg.LK_PARAMS)
         self.smoother = SmoothingEngine()
         self.motion_analyzer = MotionAnalyzer()
