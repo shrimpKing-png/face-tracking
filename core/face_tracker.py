@@ -4,7 +4,7 @@ Created on Wed Jun 25 20:10:25 2025
 Last Update: 25JUNE2025
 @author: GPAULL
 """
-
+import warnings
 import numpy as np
 import cv2 as cv
 from typing import List
@@ -187,6 +187,7 @@ class FaceTracker:
 
         # No usable data for this frame.
         else:
+            warnings.warn('No usable data for this frame! Probably gonna crash!')
             return None
 
     def _apply_hybrid_smoothing(self, frame, dlib_landmarks, prev_points):
