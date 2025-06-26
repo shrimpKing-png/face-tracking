@@ -6,15 +6,22 @@ This Python library is all about tracking faces in videos with high precision an
 
 Features
 
-    Hybrid Tracking: Instead of just relying on one method, it uses both dlib for accuracy and optical flow for speed and consistency between frames. It's the best of both worlds.
+    Hybrid Tracking: Instead of just relying on one method, it uses both dlib for accuracy
+    and optical flow for speed and consistency between frames. It's the best of both worlds.
 
-    Advanced Smoothing: Utilizes optical flow and/or a weighted moving average + z-score analysis to calm down any jittery landmarks, making them look natural and stable for cleaner data extraction.
+    Advanced Smoothing: Utilizes optical flow and/or a weighted moving average + z-score 
+    analysis to calm down any jittery landmarks, making them look natural and stable for 
+    cleaner data extraction.
 
-    Motion Analysis: Motion vectors are saved for each individual landmark so you can actually dig into the data and see how different parts of the face are moving, or which landmarks are problem spots, which is great for more detailed analysis.
+    Motion Analysis: Motion vectors are saved for each individual landmark so you can 
+    actually dig into the data and see how different parts of the face are moving, or which 
+    landmarks are problem spots, which is great for more detailed analysis.
 
-    Modular Design: Everything is organized neatly into modules that are easy to work with. If you want to tinker or add your own stuff, it won't be a headache.
+    Modular Design: Everything is organized neatly into modules that are easy to work with. 
+    If you want to tinker or add your own stuff, it won't be a headache.
 
-    Mask Generation: Need to isolate the eyes or mouth? There are tools to quickly create masks for specific facial areas using the landmarks.
+    Mask Generation: Need to isolate the eyes or mouth? There are tools to quickly create 
+    masks for specific facial areas using the landmarks.
 
 Installation
 
@@ -35,35 +42,36 @@ Option 1: Download and Install Manually
 
 Option 2: Install Directly from GitHub
 
-You can also install the latest release directly using pip and the link to the repository.
-Bash
-
-pip install git+https://github.com/shrimpKing-png/face-tracking.git
+    You can also install the latest release directly using pip and the link to the repository.
+    
+    Navigate to the releases page and download the latest face_tracking.whl file
+    Now open you python terminal and run pip install face_tracking-x.x.x-py3-none-any.whl
 
 Quick Start
 
 Getting started is pretty straightforward. Here's a quick look at how you'd use the tracker on a list of video frames:
 Python
 
-import cv2
-from face_tracking.core import FaceTracker
-
-# Assume 'video_frames' is a list of frames (numpy arrays) from a video
-# video_frames = load_your_video_frames()
-
-# Initialize the tracker
-tracker = FaceTracker(use_optical_flow=True, use_moving_average=True) #
-
-# Process the frames
-tracker.process_frames(video_frames) #
-
-# Get the smoothed landmarks for a specific frame
-frame_index = 10
-smoothed_landmarks = tracker.get_smoothed_landmarks(frame_index) #
-
-if smoothed_landmarks:
-    # You can now use the landmarks for further processing
-    print(f"Found {smoothed_landmarks.num_parts} landmarks in frame {frame_index}.") #
+    import cv2
+    from face_tracking.core import FaceTracker
+    
+    Assume 'video_frames' is a list of frames (numpy arrays) from a video
+    video_frames = load_your_video_frames()
+    
+    Initialize the tracker
+    tracker = FaceTracker(use_optical_flow=True, use_moving_average=True, landmark_detector='dlib') #
+    Current detector options are dlib or mediapipe. dlib is configured to num_landmarks of 54 so change that if you use other models#
+    
+    Process the frames
+    tracker.process_frames(video_frames) #
+    
+    Get the smoothed landmarks for a specific frame
+    frame_index = 10
+    smoothed_landmarks = tracker.get_smoothed_landmarks(frame_index) #
+    
+    if smoothed_landmarks:
+        # You can now use the landmarks for further processing
+        print(f"Found {smoothed_landmarks.num_parts} landmarks in frame {frame_index}.") #
 
 API Reference
 
@@ -93,13 +101,13 @@ Tracking
 
 Processing
 
-    SmoothingEngine (from face_tracking.processing.smoothing): This is the secret sauce for making the landmarks look smooth. It uses a weighted moving average to calm down any shakiness across frames.
+    SmoothingEngine (from face_tracking.processing.smoothing): This is a class designated for smoothing tasks, currently only smooths with EMA, but updates are planned.
 
-    normalize_frame(frame, mask) (from face_tracking.processing.frame_processor): A useful function to get your frames ready for processing. It handles things like converting to grayscale and normalizing pixel values.
+    normalize_frame(frame, mask) (from face_tracking.processing.frame_processor): Prepares 32bit IR frames for processing. It handles things like converting to grayscale and normalizing pixel values.
 
     landmarks_to_points(landmarks) (from face_tracking.processing.landmark_processor): A helper that converts dlib's landmark objects into a simple NumPy array, which is easier to do math with.
 
-    points_to_landmarks(points) (from face_tracking.processing.landmark_processor): Does the opposite of the above, turning a NumPy array of points back into a dlib-style object.
+    points_to_landmarks(points) (from face_tracking.processing.landmark_processor): Does the opposite of the above, turning a NumPy array of points back into a dlib-style object called SmoothedLandmarks (in utils).
 
 Utilities
 
@@ -110,6 +118,8 @@ Utilities
     TrackingHistory (from face_tracking.utils.data_structs): This is like the tracker's short-term memory. It keeps track of where landmarks have been recently, which is crucial for the smoothing algorithms.
 
     plot_landmarks_on_frame(frame, landmarks) (from face_tracking.utils.visualizations): A simple function to draw the detected landmarks right onto an image, which is super helpful for checking your results.
+    
+    SmoothedLandmarks() storage for landmarks to provide support for legacy functions running dlib landmark code.
 
 Confg
 
