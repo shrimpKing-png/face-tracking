@@ -59,7 +59,7 @@ class FaceTracker:
 
         # --- State Management ---
         # The history object encapsulates all frame-by-frame tracking data.
-        self.history = TrackingHistory()
+        self.history = TrackingHistory(num_landmarks=self.num_landmarks)
         # Stores the raw dlib detection result for each frame.
         self.raw_landmarks_per_frame = []
         # Stores the final, smoothed landmark result for each frame.
@@ -196,29 +196,29 @@ class FaceTracker:
             warnings.warn('No usable data for this frame! Probably gonna crash!')
             return None
 
-    def _apply_hybrid_smoothing(self, frame, dlib_landmarks, prev_points):
-        """Combines dlib, optical flow, and temporal smoothing."""
+    def _apply_hybrid_smoothing(self, frame, detected_landmarks, prev_points):
+        """Combines landmark detector, optical flow, and temporal smoothing."""
         flow_points, status, _ = self.optical_flow.track(frame)
-        dlib_points = landmark_processor.landmarks_to_points(dlib_landmarks)
+        landmark_points = landmark_processor.landmarks_to_points(detected_landmarks)
 
-        # Calculate dlib motion vectors to check for jitter.
+        # Calculate landmark motion vectors to check for jitter.
         prev_positions = prev_points.reshape(-1, 2)
-        dlib_positions = dlib_points.reshape(-1, 2)
-        dlib_motion_mags = np.linalg.norm(dlib_positions - prev_positions, axis=1)
-        z_scores = self.motion_analyzer.calculate_z_scores(dlib_motion_mags, self.history.motion_vectors,
+        landmark_positions = landmark_points.reshape(-1, 2)
+        landmark_motion_mags = np.linalg.norm(landmark_positions - prev_positions, axis=1)
+        z_scores = self.motion_analyzer.calculate_z_scores(landmark_motion_mags, self.history.motion_vectors,
                                                            cfg.HISTORY_WINDOW)
 
         # Combine points based on z-score analysis.
-        combined_positions = np.zeros_like(dlib_positions)
+        combined_positions = np.zeros_like(landmark_positions)
         flow_positions = flow_points.reshape(-1, 2)
         for i in range(self.num_landmarks):
-            if status[i] == 0:  # Optical flow failed, trust dlib.
-                combined_positions[i] = dlib_positions[i]
+            if status[i] == 0:  # Optical flow failed, trust landmarks.
+                combined_positions[i] = landmark_positions[i]
             else:  # Blend based on motion magnitude.
                 is_jitter = z_scores[i] < cfg.Z_SCORE_THRESHOLD
-                d_w = cfg.LOW_MOTION_DLIB_WEIGHT if is_jitter else cfg.DLIB_WEIGHT
+                d_w = cfg.LOW_MOTION_DLIB_WEIGHT if is_jitter else cfg.LANDMARK_WEIGHT
                 f_w = cfg.LOW_MOTION_FLOW_WEIGHT if is_jitter else cfg.FLOW_WEIGHT
-                combined_positions[i] = (d_w * dlib_positions[i] + f_w * flow_positions[i])
+                combined_positions[i] = (d_w * landmark_positions[i] + f_w * flow_positions[i])
 
         # Apply final temporal smoothing if enabled.
         final_positions = self._apply_temporal_smoothing(combined_positions)
