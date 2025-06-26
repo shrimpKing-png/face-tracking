@@ -1,4 +1,5 @@
 """
+core/__init__.py
 The 'core' module contains the central components that orchestrate the face
 tracking process.
 
