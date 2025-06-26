@@ -22,6 +22,7 @@ mock_settings.SMOOTHING_WINDOW = 10
 sys.modules['face_tracking.config'].settings = mock_settings
 
 # Now import the modules under test
+import face_tracking
 from face_tracking import MotionAnalyzer
 from face_tracking.processing.landmark_processor import landmarks_to_points, points_to_landmarks, SmoothedLandmarks
 from face_tracking.processing.frame_processor import normalize_frame
@@ -278,7 +279,7 @@ class TestSmoothingEngine(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.engine = SmoothingEngine(decay_factor=0.8, smoothing_window=5)
+        self.engine = face_tracking.processing.smoothing.SmoothingEngine(decay_factor=0.8, smoothing_window=5)
         self.current_positions = np.array([[10, 20], [30, 40], [50, 60]])
 
         # Create position history
@@ -295,13 +296,13 @@ class TestSmoothingEngine(unittest.TestCase):
 
     def test_initialization(self):
         """Test SmoothingEngine initialization."""
-        engine = SmoothingEngine(decay_factor=0.5, smoothing_window=10)
+        engine = face_tracking.processing.smoothing.SmoothingEngine(decay_factor=0.5, smoothing_window=10)
         self.assertEqual(engine.decay_factor, 0.5)
         self.assertEqual(engine.smoothing_window, 10)
 
     def test_initialization_with_defaults(self):
         """Test SmoothingEngine initialization with default values."""
-        engine = SmoothingEngine()
+        engine = face_tracking.processing.smoothing.SmoothingEngine()
         self.assertEqual(engine.decay_factor, 0.9)  # From mock settings
         self.assertEqual(engine.smoothing_window, 10)
 

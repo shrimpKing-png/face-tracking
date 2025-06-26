@@ -9,7 +9,7 @@ Last Update: 25JUNE2025
 import dlib
 import numpy as np
 import cv2 as cv
-import face_tracking.config.settings as cfg
+from face_tracking.config import settings as cfg
 
 
 class DlibDetector:

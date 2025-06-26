@@ -20,8 +20,8 @@ from face_tracking.tracking.optical_flow import OpticalFlowTracker
 from face_tracking.processing import landmark_processor, frame_processor
 from face_tracking.processing.smoothing import SmoothingEngine
 from face_tracking.core.motion_analysis import MotionAnalyzer
-from face_tracking.utils.data_structs import TrackingHistory
-from face_tracking.utils.mask_operations import MaskGenerator
+from face_tracking.utils import TrackingHistory
+from face_tracking.utils import MaskGenerator
 
 
 class FaceTracker:

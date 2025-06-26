@@ -9,7 +9,7 @@ Last Update: 25JUNE2025
 import os
 import tkinter as tk
 from tkinter import filedialog
-from face_tracking import normalize_frame
+from face_tracking.processing.frame_processor import normalize_frame
 import cv2 as cv
 import numpy as np
 

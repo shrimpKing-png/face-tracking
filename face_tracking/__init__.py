@@ -11,7 +11,6 @@ from face_tracking.tracking import *
 from .utils import general
 from .utils import visualizations
 
-
 __all__ = [
     "MaskGenerator",
     "MotionAnalyzer",
@@ -23,5 +22,7 @@ __all__ = [
     'DlibDetector',
     'OpticalFlowTracker',
     'general',
-    'visualizations'
+    'visualizations',
+    'utils',
+    'config'
 ]
