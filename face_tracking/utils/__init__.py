@@ -1,4 +1,5 @@
 """
+utils/__init__.py
 The 'utils' module contains helper classes and functions used throughout the
 face_tracking library.
 

@@ -53,7 +53,7 @@ Z_SCORE_THRESHOLD = 3.0
 # Weights for blending dlib's raw detection with the optical flow prediction.
 # Giving a higher weight to optical flow can result in smoother tracking, but
 # might drift over time if dlib detection is lost.
-DLIB_WEIGHT = 0.4
+LANDMARK_WEIGHT = 0.4
 FLOW_WEIGHT = 0.6
 
 # Special weights applied when motion is very small (below the z-score threshold).

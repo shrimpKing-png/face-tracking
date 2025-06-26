@@ -1,4 +1,5 @@
 """
+tracking/__init__.py
 The 'tracking' module provides classes for detecting and tracking facial
 features in video frames.
 

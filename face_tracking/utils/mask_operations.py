@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+utils/mask_operations.py
 Created on Wed Jun 25 20:10:25 2025
 Last Update: 25JUNE2025
 @author: GPAULL
@@ -89,7 +90,7 @@ class MaskGenerator:
         roi_complete = False
 
         def mouse_callback(event, x, y, flags, param):
-            nonlocal selected_points, selected_indices, roi_complete, display_img
+            nonlocal roi_complete
 
             if event == cv.EVENT_LBUTTONDOWN and not roi_complete:
                 # Find the closest landmark point
@@ -144,8 +145,8 @@ class MaskGenerator:
 
             # Reset selection
             if key == ord('r'):
-                selected_points = []
-                selected_indices = []
+                selected_points.clear()
+                selected_indices.clear()
                 roi_complete = False
                 # Redraw original image with landmarks
                 display_img = img.copy()
@@ -171,7 +172,7 @@ class MaskGenerator:
         :param predictor: dlib landmark predictor
         :return: Selected landmark indices for ROI
         """
-        img = normalize_frame(img, np.ones_like(img))
+        img = normalize_frame(img, np.ones_like(img)) if img.ndim == 2 else img
         # Extract faces and landmarks
         result = detector.extract_faces(img)
 

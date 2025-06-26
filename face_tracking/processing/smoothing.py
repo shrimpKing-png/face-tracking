@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+processing/smoothing.py
 Created on Wed Jun 25 20:10:25 2025
 Last Update: 25JUNE2025
 @author: GPAULL
@@ -8,9 +9,10 @@ Last Update: 25JUNE2025
 from typing import Optional, TYPE_CHECKING
 import numpy as np
 from face_tracking.config import settings as cfg
-
 if TYPE_CHECKING:
-    pass
+    from face_tracking.utils import TrackingHistory
+else:
+    from face_tracking.utils import TrackingHistory
 
 
 class SmoothingEngine:

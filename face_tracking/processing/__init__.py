@@ -1,4 +1,5 @@
 """
+processing/__init__.py
 The 'processing' module provides tools for data transformation and enhancement.
 
 This includes utilities for normalizing video frames, converting between
