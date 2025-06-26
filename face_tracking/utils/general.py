@@ -9,7 +9,7 @@ Last Update: 25JUNE2025
 import os
 import tkinter as tk
 from tkinter import filedialog
-
+from face_tracking import normalize_frame
 import cv2 as cv
 import numpy as np
 
@@ -95,7 +95,7 @@ def list_to_video(frames_lst: list, vid_name: str, fps: int=30):
     """
     # convert to bgr if frames are grayscale
     if frames_lst[0].ndim == 2:
-        frames_lst = [normalize(frame, np.ones_like(frame)) * 255 for frame in frames_lst]
+        frames_lst = [normalize_frame(frame, np.ones_like(frame)) * 255 for frame in frames_lst]
         frames_lst = [frame.astype(np.uint8) for frame in frames_lst]
         frames_lst = [cv.cvtColor(frame, cv.COLOR_GRAY2BGR) for frame in frames_lst]
     # setup opencv videoWriter
