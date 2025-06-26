@@ -7,9 +7,11 @@ Last Update: 25JUNE2025
 
 import numpy as np
 import cv2 as cv
+from typing import List
 
 
 class MaskGenerator:
+    @staticmethod
     def define_mask_from_landmark(img, landmarks, landmark_list):
         """
 
@@ -20,7 +22,7 @@ class MaskGenerator:
 
         Returns:
             masked_image: the image with the mask applied to it.
-            Esentially a cutout of the image in the shape of the mask
+            Esentially a cutout of the image in the shape of the
             mask: the mask, in the same data-format as the original image (maybe change to binary later)
 
         """
@@ -32,6 +34,31 @@ class MaskGenerator:
         masked_image = img * mask
         return masked_image, mask
 
+    def apply_masks(self, frame: np.ndarray, landmarks, masks: List[List[int]], ):
+        """
+        Creates masked images based on landmark groups.
+
+        Args:
+            frame: The normalized source frame.
+            landmarks: The landmarks object for the frame.
+            masks: A list of lists, where each inner list contains the landmark
+                   indices for a specific facial feature.
+
+        Returns:
+            A tuple containing a list of the generated masked images and a list
+            of the corresponding mask arrays.
+        """
+        masked_images = []
+        new_masks_lst = []
+        for landmark_list in masks:
+            masked_image, new_mask = self.define_mask_from_landmark(
+                frame, landmarks, landmark_list
+            )
+            masked_images.append(masked_image)
+            new_masks_lst.append(new_mask)
+        return masked_images, new_masks_lst
+
+    @staticmethod
     def plot_landmarks_and_select_roi(img, landmarks):
         """
         Plot landmark points on an image and allow interactive ROI selection.
