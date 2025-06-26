@@ -28,6 +28,7 @@ class MediaPipeDetector:
             min_detection_con (float): Minimum confidence for face detection
             min_tracking_con (float): Minimum confidence for face tracking
         """
+        self.type = 'mediapipe'
         self.static_image_mode = static_image_mode
         self.max_num_faces = max_num_faces
         self.refine_landmarks = refine_landmarks
@@ -77,6 +78,7 @@ class MediaPipeDetector:
             list: List containing single landmark object (or None if no face detected)
                   Format matches dlib detector output for interchangeability
         """
+        print('extracting face with mediapipe')
         # Convert frame to RGB if needed
         if len(frame.shape) == 3:
             if frame.shape[2] == 3:  # BGR
@@ -88,6 +90,7 @@ class MediaPipeDetector:
 
         # Process frame with MediaPipe
         results = self.faceMesh.process(imgRGB)
+        print(results)
 
         if results.multi_face_landmarks:
             # Get the first face (MediaPipe can detect multiple, but we use only first for dlib compatibility)
@@ -114,7 +117,7 @@ class MediaPipeDetector:
             points_array = np.array(dlib_points, dtype=np.float32).reshape(-1, 1, 2)
             landmarks = points_to_landmarks(points_array)
 
-            return [landmarks]
+            return (landmarks, len(results.multi_face_landmarks), 1)
 
         # No face detected
         return [None]

@@ -17,6 +17,7 @@ class DlibDetector:
                  predictor_path=cfg.PREDICTOR_PATH):
         self.detector = dlib.simple_object_detector(detector_path)
         self.predictor = dlib.shape_predictor(predictor_path)
+        self.type = 'dlib'
 
     def extract_faces(self, img):
         """
@@ -28,7 +29,7 @@ class DlibDetector:
         faces = self.detector(img)
         num_faces = len(faces)
         if num_faces == 0:
-            return None, faces, num_faces, None
+            return None, faces, num_faces
         elif num_faces == 1:
             # Retrieve the landmarks for the face selected
             face = faces[0]
