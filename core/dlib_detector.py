@@ -12,10 +12,9 @@ import cv2 as cv
 def extract_faces(img, detector, predictor):
     """
     :param img: the image that contains the face or faces you want to extract
-    :param detector: the detector downloaded from sf-tl54
+    :param detector: the detector downloaded from sf-tl54 (or any dlib detector)
     :param predictor: the predictor downloaded from sf-tl54
     """
-    perspective_lst = [1, 7, 12, 17]
     if not img.flags.c_contiguous:
         img = np.ascontiguousarray(img)
 
@@ -27,22 +26,17 @@ def extract_faces(img, detector, predictor):
         # Retrieve the landmarks for the face selected
         face = faces[0]
         landmarks = predictor(img, face)
-        bounding_box = np.array([[landmarks.part(n).x, landmarks.part(n).y] for n in perspective_lst])
-        return landmarks, face, num_faces, bounding_box
+        return landmarks, face, num_faces
     else:
         print(f"Multiple faces detected ({num_faces} faces found)")
         print("Displaying landmarks for each face: ")
 
         all_landmarks = []
-        all_bbox = []
 
         # Show landmarks for each face
         for i, face in enumerate(faces):
             landmarks = predictor(img, face)
-            bounding_box = np.array([[landmarks.part(n).x, landmarks.part(n).y] for n in perspective_lst])
-
             all_landmarks.append(landmarks)
-            all_bbox.append(bounding_box)
         display_img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
         for j, landmarks in enumerate(all_landmarks):
             landmark_points = []
@@ -60,5 +54,4 @@ def extract_faces(img, detector, predictor):
         correct_face_num = int(input("Enter the correct number of the face you want to extract: "))
         return (all_landmarks[correct_face_num - 1],
                 faces[correct_face_num - 1],
-                num_faces,
-                all_bbox[correct_face_num - 1])
+                num_faces)
