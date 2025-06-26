@@ -9,8 +9,9 @@ import numpy as np
 import cv2 as cv
 from typing import List
 
-from face_tracking import MediaPipeDetector
+
 # Using relative imports for library structure
+from face_tracking.tracking import MediaPipeDetector
 from face_tracking.config import settings as cfg
 from face_tracking.tracking.dlib_detector import DlibDetector
 from face_tracking.tracking.optical_flow import OpticalFlowTracker
@@ -238,11 +239,6 @@ class FaceTracker:
         self.history.log_motion_vector(motion_mags)
 
         return final_positions.reshape(-1, 1, 2)
-
-    def _apply_dlib_only(self, dlib_landmarks, prev_points):
-        """Uses only dlib, with optional temporal smoothing."""
-        dlib_points = landmark_processor.landmarks_to_points(dlib_landmarks)
-        return self.compute_final_positions_ts(dlib_points, prev_points)
 
     def _apply_temporal_smoothing(self, positions):
         """Applies the weighted moving average if enabled and updates history."""
