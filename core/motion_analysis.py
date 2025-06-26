@@ -7,6 +7,7 @@ Last Update: 25JUNE2025
 
 import numpy as np
 import pandas as pd
+from utils import TrackingHistory
 
 
 class MotionAnalyzer:
@@ -53,24 +54,31 @@ class MotionAnalyzer:
         return z_scores
 
     @staticmethod
-    def build_motion_stat_df(motion_history: np.ndarray, num_landmarks: int) -> pd.DataFrame:
+    def build_motion_stat_df(history: TrackingHistory) -> pd.DataFrame:
         """
-        Builds a pandas DataFrame from the motion vectors history.
+        Builds a pandas DataFrame from the motion vectors stored in a TrackingHistory object.
 
         Args:
-            motion_history (np.ndarray): The history of motion vectors.
-            num_landmarks (int): The number of landmarks.
+            history (TrackingHistory): An instance of the TrackingHistory class
+                                       containing the motion data.
 
         Returns:
             pd.DataFrame: A DataFrame containing motion vector statistics.
         """
+        # Access motion_vectors and num_landmarks directly from the history object
+        motion_history = history.motion_vectors
+        num_landmarks = history.num_landmarks
+
         column_names = [f'landmark_{i}_motion_vector' for i in range(num_landmarks)]
 
         if motion_history.shape[0] == 0:
-            print("Warning: No motion vectors available to build the DataFrame.")
+            print("Warning: No motion vectors available in TrackingHistory to build the DataFrame.")
             return pd.DataFrame(columns=column_names)
 
+        # Create the DataFrame using the motion data from the history object
         df = pd.DataFrame(data=motion_history, columns=column_names)
+
+        # The analysis logic remains the same
         landmark_motion_sums = df.sum()
         sorted_landmark_motion = landmark_motion_sums.sort_values(ascending=True)
 
