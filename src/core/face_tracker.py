@@ -10,15 +10,15 @@ import cv2 as cv
 from typing import List
 
 # Using relative imports for library structure
-from config import settings as cfg
-from tracking.dlib_detector import DlibDetector
-from tracking.optical_flow import OpticalFlowTracker
-from processing import landmark_processor, frame_processor
-from processing.smoothing import SmoothingEngine
-from core.motion_analysis import MotionAnalyzer
-from utils.data_structs import TrackingHistory
-from utils.mask_operations import MaskGenerator
-from utils.visualizations import plot_landmarks_on_frame
+from src.config import settings as cfg
+from src.tracking.dlib_detector import DlibDetector
+from src.tracking.optical_flow import OpticalFlowTracker
+from src.processing import landmark_processor, frame_processor
+from src.processing.smoothing import SmoothingEngine
+from src.core.motion_analysis import MotionAnalyzer
+from src.utils.data_structs import TrackingHistory
+from src.utils.mask_operations import MaskGenerator
+from src.utils.visualizations import plot_landmarks_on_frame
 
 class FaceTracker:
     """

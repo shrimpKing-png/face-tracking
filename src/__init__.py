@@ -5,10 +5,9 @@ Last Update: 25JUNE2025
 Author: GPAULL
 """
 
-from config import *
-from core import *
-from processing import *
-from tracking import *
+from src.core import *
+from src.processing import *
+from src.tracking import *
 
 
 __all__ = [
