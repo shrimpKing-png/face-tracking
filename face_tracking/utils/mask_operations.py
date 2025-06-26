@@ -10,6 +10,7 @@ import cv2 as cv
 from typing import List
 from face_tracking.processing.frame_processor import normalize_frame
 
+
 class MaskGenerator:
     @staticmethod
     def define_mask_from_landmark(img, landmarks, landmark_list):
