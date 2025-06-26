@@ -191,7 +191,6 @@ class FaceTracker:
 
     def _apply_hybrid_smoothing(self, frame, dlib_landmarks, prev_points):
         """Combines dlib, optical flow, and temporal smoothing."""
-        print("applying hybrid smoothing...")
         flow_points, status, _ = self.optical_flow.track(frame)
         dlib_points = landmark_processor.landmarks_to_points(dlib_landmarks)
 
@@ -301,12 +300,7 @@ def facetracking_outline_smooth(face_tracker: FaceTracker, frame_index: int,
     Returns:
         Tuple of (processed_image, masked_images, new_masks)
     """
-    # Use the pre-processed normalized frame from face_tracker
-    if frame_index < len(face_tracker.frames_processed) and face_tracker.frames_processed[frame_index] is not None:
-        img_normalized = face_tracker.frames_processed[frame_index]
-    else:
-        # Fallback to normalizing the current frame if not available
-        img_normalized = frame_processor.normalize_frame(frame)
+    img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame))
 
     # Get smoothed landmarks for this frame (prioritize smoothed, fallback to original)
     dst_landmarks = face_tracker.get_smoothed_landmarks(frame_index)
