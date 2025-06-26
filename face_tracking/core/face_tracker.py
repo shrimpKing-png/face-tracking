@@ -98,7 +98,7 @@ class FaceTracker:
         print("Starting face tracking process...")
 
         # Step 1: Pre-process frames (e.g., convert to grayscale and normalize).
-        normalized_frames = [self._normalize_frame(frame) for frame in frames]
+        normalized_frames = [self._normalize_frame(frame) for frame in frames] if frames[0].ndim == 2 else frames
 
         # Step 2: Run initial dlib detection on all frames to get a baseline.
         # Note: This is where you would integrate your multiprocessing utility.

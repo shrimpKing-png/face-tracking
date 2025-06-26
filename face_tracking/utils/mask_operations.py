@@ -171,7 +171,7 @@ class MaskGenerator:
         :param predictor: dlib landmark predictor
         :return: Selected landmark indices for ROI
         """
-        img = normalize_frame(img, np.ones_like(img))
+        img = normalize_frame(img, np.ones_like(img)) if img.ndim == 2 else img
         # Extract faces and landmarks
         result = detector.extract_faces(img)
 
