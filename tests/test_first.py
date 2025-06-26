@@ -22,10 +22,10 @@ mock_settings.SMOOTHING_WINDOW = 10
 sys.modules['face_tracking.config'].settings = mock_settings
 
 # Now import the modules under test
-from motion_analysis import MotionAnalyzer
-from landmark_processor import landmarks_to_points, points_to_landmarks, SmoothedLandmarks
-from frame_processor import normalize_frame
-from smoothing import SmoothingEngine
+from face_tracking import MotionAnalyzer
+from face_tracking.processing.landmark_processor import landmarks_to_points, points_to_landmarks, SmoothedLandmarks
+from face_tracking.processing.frame_processor import normalize_frame
+from face_tracking.processing.smoothing import SmoothingEngine
 
 
 class MockTrackingHistory:
