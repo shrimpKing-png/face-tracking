@@ -8,6 +8,7 @@ Author: GPAULL
 from face_tracking.core import *
 from face_tracking.processing import *
 from face_tracking.tracking import *
+from utils import general, visualizations
 
 
 __all__ = [
@@ -19,5 +20,7 @@ __all__ = [
     'SmoothedLandmarks',
     'SmoothingEngine',
     'DlibDetector',
-    'OpticalFlowTracker'
+    'OpticalFlowTracker',
+    'general',
+    'visualizations'
 ]
