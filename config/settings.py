@@ -11,3 +11,5 @@ Exponential moving average smoothing parameter defaults
 DECAY_FACTOR = 0.8
 SMOOTHING_WINDOW = 10
 NUM_LANDMARKS = 54
+DETECTOR_PATH = '../SF-TL54/dlib_face_detector.svm'
+PREDICTOR_PATH = '../SF-TL54/dlib_landmark_predictor.dat'
