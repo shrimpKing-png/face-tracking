@@ -148,13 +148,14 @@ class FaceTracker:
         self.history.log_motion_vector(np.zeros(self.num_landmarks))
 
         # --- Process Subsequent Frames ---
+        last_points = None
         for i in range(1, len(frames)):
             current_frame = frames[i]
             dlib_landmarks = self.raw_landmarks_per_frame[i]
 
             # We need the previous frame's smoothed points for motion calculation.
             prev_smoothed_points = landmark_processor.landmarks_to_points(self.smoothed_landmarks_per_frame[-1])
-            if prev_smoothed_points is None:
+            if prev_smoothed_points is None and last_points is not None:
                 prev_smoothed_points = last_points
 
             # The core logic: process the frame using the best available data.
