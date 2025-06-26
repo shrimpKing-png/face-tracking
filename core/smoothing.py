@@ -7,7 +7,7 @@ Last Update: 25JUNE2025
 
 from typing import Optional
 import numpy as np
-import config.config as cfg
+import config.settings as cfg
 
 
 class SmoothingEngine:
