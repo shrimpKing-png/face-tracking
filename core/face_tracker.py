@@ -64,6 +64,12 @@ class FaceTracker:
 
         self._print_initialization_status()
 
+    def get_motion_stats(self):
+        """
+        :return: the motion analyzer for stats building
+        """
+        return self.motion_analyzer.build_motion_stat_df(self.history)
+
     def _print_initialization_status(self):
         """Prints the current configuration of the tracker for user feedback."""
         print("Initialized FaceTracker with:")
