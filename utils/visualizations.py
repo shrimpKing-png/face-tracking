@@ -81,3 +81,23 @@ def colored_mask_viseye(viseye_lst, frame):
     else:
         # If no masks, convert grayscale to BGR
         return cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
+
+
+def draw_landmarks_on_frame(frame: np.ndarray, landmarks) -> np.ndarray:
+    """
+    Draws landmark points and their indices on a frame.
+
+    Args:
+        frame: The image to draw on.
+        landmarks: A landmarks object with a .num_parts and a .part(i) method.
+
+    Returns:
+        The frame with landmarks visualized.
+    """
+    vis_frame = cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
+    for i in range(landmarks.num_parts):
+        point = landmarks.part(i)
+        cv.circle(vis_frame, (point.x, point.y), 3, (0, 255, 0), -1)
+        cv.putText(vis_frame, str(i), (point.x + 5, point.y - 5),
+                   cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
+    return vis_frame
