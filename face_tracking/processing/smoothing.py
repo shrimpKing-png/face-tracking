@@ -9,9 +9,10 @@ Last Update: 25JUNE2025
 from typing import Optional, TYPE_CHECKING
 import numpy as np
 from face_tracking.config import settings as cfg
-from face_tracking.utils import TrackingHistory
 if TYPE_CHECKING:
-    pass
+    from face_tracking.utils import TrackingHistory
+else:
+    from face_tracking.utils import TrackingHistory
 
 
 class SmoothingEngine:
