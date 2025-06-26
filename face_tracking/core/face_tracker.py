@@ -151,9 +151,12 @@ class FaceTracker:
 
             # We need the previous frame's smoothed points for motion calculation.
             prev_smoothed_points = landmark_processor.landmarks_to_points(self.smoothed_landmarks_per_frame[-1])
+            if prev_smoothed_points is None:
+                prev_smoothed_points = last_points
 
             # The core logic: process the frame using the best available data.
             final_points = self._process_single_frame(current_frame, dlib_landmarks, prev_smoothed_points)
+            last_points = final_points
 
             # Convert points back to a landmark object and store the result.
             if final_points is not None:
