@@ -186,8 +186,8 @@ class FaceTracker:
             return self._apply_optical_flow_only(frame, prev_points)
 
         # Strategy 3 (Basic): Dlib detection only (if optical flow is off).
-        elif dlib_landmarks and prev_points is not None:
-            return self._apply_dlib_only(dlib_landmarks, prev_points)
+        elif dlib_landmarks is not None:
+            return landmark_processor.landmarks_to_points(dlib_landmarks)
 
         # No usable data for this frame.
         else:
