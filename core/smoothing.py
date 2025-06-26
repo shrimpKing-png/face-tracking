@@ -5,18 +5,21 @@ Last Update: 25JUNE2025
 @author: GPAULL
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import numpy as np
 import config.settings as cfg
+
+if TYPE_CHECKING:
+    from utils.data_structs import TrackingHistory
 
 
 class SmoothingEngine:
     """
-    Handles smoothing algorithms for landmark positions.
+    Handles smoothing algorithms for landmark positions using TrackingHistory.
 
     This class provides methods for applying smoothing techniques, such as a
-    weighted moving average, to a series of data points. It is designed to be
-    stateless, with all necessary data and parameters passed into its methods.
+    weighted moving average, to a series of data points. It is optimized to work
+    directly with TrackingHistory objects to avoid data duplication.
     """
 
     def __init__(
@@ -41,20 +44,21 @@ class SmoothingEngine:
     def calculate_weighted_moving_average(
             self,
             current_positions: np.ndarray,
-            position_history: np.ndarray,
+            tracking_history: 'TrackingHistory',
             decay_factor: Optional[float] = None,
     ) -> np.ndarray:
         """
-        Calculates the weighted moving average of landmark positions.
+        Calculates the weighted moving average using TrackingHistory data.
 
         This method applies an exponential decay to the weights of the historical
-        positions, giving more influence to more recent data.
+        positions stored in the TrackingHistory object, giving more influence to
+        more recent data.
 
         Args:
             current_positions (np.ndarray): The current positions of the landmarks,
                 with shape (num_landmarks, 2).
-            position_history (np.ndarray): A history of previous landmark
-                positions, with a shape of (history_length, num_landmarks, 2).
+            tracking_history (TrackingHistory): The tracking history object containing
+                position history data.
             decay_factor (Optional[float]): If provided, this will override the
                 default decay factor for this calculation.
 
@@ -64,7 +68,9 @@ class SmoothingEngine:
         """
         active_decay_factor = decay_factor if decay_factor is not None else self.decay_factor
 
-        history_len = min(len(position_history), self.smoothing_window)
+        # Use the actual filled history length, not the buffer size
+        history_len = min(tracking_history.history_filled, self.smoothing_window)
+
         if history_len == 0:
             return current_positions
 
@@ -72,9 +78,12 @@ class SmoothingEngine:
         weights = np.array([active_decay_factor ** i for i in range(history_len + 1)])
         weights /= np.sum(weights)  # Normalize weights
 
+        # Get the relevant portion of history (only filled positions)
+        relevant_history = tracking_history.position_history[:history_len]
+
         # Combine current and historical positions for calculation
         all_positions = np.concatenate(
-            [current_positions[np.newaxis, :, :], position_history[:history_len]], axis=0
+            [current_positions[np.newaxis, :, :], relevant_history], axis=0
         )
 
         # Apply weights and sum to get the smoothed positions
@@ -87,19 +96,20 @@ class SmoothingEngine:
     def apply_smoothing(
             self,
             current_positions: np.ndarray,
-            position_history: np.ndarray,
+            tracking_history: 'TrackingHistory',
             method: str = 'weighted_moving_average',
             **kwargs,
     ) -> np.ndarray:
         """
-        Applies a specified smoothing method to the landmark positions.
+        Applies a specified smoothing method using TrackingHistory data.
 
-        This acts as a dispatcher to various smoothing algorithms. Currently,
-        it supports 'weighted_moving_average'.
+        This acts as a dispatcher to various smoothing algorithms that work
+        directly with TrackingHistory objects. Currently supports
+        'weighted_moving_average'.
 
         Args:
             current_positions (np.ndarray): The current positions of the landmarks.
-            position_history (np.ndarray): A history of previous landmark positions.
+            tracking_history (TrackingHistory): The tracking history object.
             method (str): The smoothing method to use.
             **kwargs: Additional keyword arguments to pass to the smoothing method.
 
@@ -111,7 +121,38 @@ class SmoothingEngine:
         """
         if method == 'weighted_moving_average':
             return self.calculate_weighted_moving_average(
-                current_positions, position_history, **kwargs
+                current_positions, tracking_history, **kwargs
             )
         else:
             raise ValueError(f"Unknown smoothing method: {method}")
+
+    def smooth_and_update_history(
+            self,
+            current_positions: np.ndarray,
+            tracking_history: 'TrackingHistory',
+            method: str = 'weighted_moving_average',
+            **kwargs,
+    ) -> np.ndarray:
+        """
+        Convenience method that applies smoothing and updates the history in one call.
+
+        This method applies the specified smoothing algorithm and then automatically
+        adds the smoothed positions to the tracking history.
+
+        Args:
+            current_positions (np.ndarray): The current positions of the landmarks.
+            tracking_history (TrackingHistory): The tracking history object.
+            method (str): The smoothing method to use.
+            **kwargs: Additional keyword arguments to pass to the smoothing method.
+
+        Returns:
+            np.ndarray: The smoothed landmark positions.
+        """
+        smoothed_positions = self.apply_smoothing(
+            current_positions, tracking_history, method, **kwargs
+        )
+
+        # Update the history with the smoothed positions
+        tracking_history.add_position_to_history(smoothed_positions)
+
+        return smoothed_positions
