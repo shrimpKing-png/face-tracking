@@ -18,7 +18,7 @@ from processing.smoothing import SmoothingEngine
 from core.motion_analysis import MotionAnalyzer
 from utils.data_structs import TrackingHistory
 from utils.mask_operations import MaskGenerator
-
+from utils.visualizations import plot_landmarks_on_frame
 
 class FaceTracker:
     """
@@ -319,10 +319,6 @@ class FaceTracker:
             landmark_points.append((point.x, point.y))
 
         # Draw landmarks on image
-        img_normalized = cv.cvtColor(img_normalized, cv.COLOR_GRAY2BGR)
-        for i, (x, y) in enumerate(landmark_points):
-            cv.circle(img_normalized, (x, y), 3, (0, 255, 0), -1)
-            cv.putText(img_normalized, str(i), (x + 5, y - 5),
-                       cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
+        img_normalized = plot_landmarks_on_frame(frame, np.ones_like(frame))
 
         return img_normalized, masked_images, newmasks_list

@@ -83,7 +83,7 @@ def colored_mask_viseye(viseye_lst, frame):
         return cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
 
 
-def draw_landmarks_on_frame(frame: np.ndarray, landmarks) -> np.ndarray:
+def plot_landmarks_on_frame(frame: np.ndarray, landmarks) -> np.ndarray:
     """
     Draws landmark points and their indices on a frame.
 
