@@ -6,7 +6,6 @@ Last Update: 25JUNE2025
 """
 
 import numpy as np
-from ..utils.data_structs import SmoothedLandmarks
 
 
 def landmarks_to_points(landmarks) -> np.ndarray:
@@ -42,3 +41,38 @@ def points_to_landmarks(points: np.ndarray) -> object:
         return None
 
     return SmoothedLandmarks(points)
+
+
+class SmoothedLandmarks:
+    """
+    A data structure to hold smoothed landmark points, mimicking dlib's interface.
+    Allows for creation of new landmarks to use with legacy tracking functions.
+    """
+
+    def __init__(self, points_array: np.ndarray):
+        """
+        Initializes the object with a numpy array of points.
+
+        Args:
+            points_array: A numpy array of shape (num_points, 1, 2) or (num_points, 2).
+        """
+        self.points = points_array.reshape(-1, 2)
+        self.num_parts = len(self.points)
+
+    def part(self, index: int):
+        """
+        Returns a point object with 'x' and 'y' attributes, similar to dlib.
+
+        Args:
+            index: The index of the landmark point.
+
+        Returns:
+            A simple object with integer x and y coordinates.
+        """
+
+        class Point:
+            def __init__(self, x, y):
+                self.x = int(x)
+                self.y = int(y)
+
+        return Point(self.points[index, 0], self.points[index, 1])
