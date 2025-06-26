@@ -8,7 +8,7 @@ Last Update: 25JUNE2025
 import numpy as np
 import cv2 as cv
 from typing import List
-
+from src.processing.frame_processor import normalize_frame
 
 class MaskGenerator:
     @staticmethod
@@ -160,3 +160,28 @@ class MaskGenerator:
 
         cv.destroyAllWindows()
         return selected_indices
+
+    def select_facial_roi(self, img, dlib_detector):
+        """
+        Complete workflow: extract faces and select ROI from landmarks
+
+        :param img: Input image
+        :param detector: dlib face detector
+        :param predictor: dlib landmark predictor
+        :return: Selected landmark indices for ROI
+        """
+        img = normalize_frame(img, np.ones_like(img))
+        # Extract faces and landmarks
+        result = dlib_detector.extract_faces(img)
+
+        if result[0] is None:
+            print("No faces detected!")
+            return []
+
+        landmarks, faces, num_faces, bounding_box = result
+        print(f"Found {num_faces} face(s)")
+
+        # Select ROI from landmarks
+        selected_roi = self.plot_landmarks_and_select_roi(img, landmarks)
+
+        return selected_roi

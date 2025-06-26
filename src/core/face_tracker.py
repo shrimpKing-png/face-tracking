@@ -319,6 +319,6 @@ class FaceTracker:
             landmark_points.append((point.x, point.y))
 
         # Draw landmarks on image
-        img_normalized = plot_landmarks_on_frame(frame, np.ones_like(frame))
+        img_normalized = plot_landmarks_on_frame(frame, dst_landmarks)
 
         return img_normalized, masked_images, newmasks_list
