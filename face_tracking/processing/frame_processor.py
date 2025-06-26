@@ -28,7 +28,7 @@ def normalize_frame(arr, imgmask):
 
     mask = np.array(imgmask)
     bool_mask = mask.astype(bool)
-    new_arr = np.array(arr)
+    new_arr = np.array(arr).copy()
     """
     get values of just the face without any zeros, etc
     """
