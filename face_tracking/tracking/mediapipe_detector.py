@@ -17,7 +17,7 @@ class MediaPipeDetector:
     """
 
     def __init__(self, static_image_mode=False, max_num_faces=1, refine_landmarks=False,
-                 min_detection_con=0.1, min_tracking_con=0.5):
+                 min_detection_con=0.1, min_tracking_con=0.5, num_landmarks=468):
         """
         Initialize MediaPipe FaceMesh detector.
 
@@ -29,6 +29,7 @@ class MediaPipeDetector:
             min_tracking_con (float): Minimum confidence for face tracking
         """
         self.type = 'mediapipe'
+        self.num_landmarks = num_landmarks
         self.static_image_mode = static_image_mode
         self.max_num_faces = max_num_faces
         self.refine_landmarks = refine_landmarks
@@ -43,29 +44,6 @@ class MediaPipeDetector:
             self.min_detection_con,
             self.min_tracking_con
         )
-
-        # MediaPipe to dlib landmark mapping (68 key facial landmarks)
-        # This maps MediaPipe's 468 landmarks to dlib's 68 landmark format
-        self.MEDIAPIPE_TO_DLIB_MAP = [
-            # Jaw line (0-16)
-            172, 176, 148, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67,
-            # Right eyebrow (17-21)
-            296, 334, 293, 300, 276,
-            # Left eyebrow (22-26)
-            70, 63, 105, 66, 107,
-            # Nose bridge (27-30)
-            9, 10, 151, 195,
-            # Lower nose (31-35)
-            236, 3, 51, 48, 115,
-            # Right eye (36-41)
-            33, 7, 163, 144, 145, 153,
-            # Left eye (42-47)
-            362, 398, 384, 385, 386, 387,
-            # Outer lip (48-59)
-            61, 84, 17, 314, 405, 320, 307, 375, 321, 308, 324, 318,
-            # Inner lip (60-67)
-            78, 95, 88, 178, 87, 14, 317, 402
-        ]
 
     def extract_faces(self, frame):
         """
@@ -90,7 +68,6 @@ class MediaPipeDetector:
 
         # Process frame with MediaPipe
         results = self.faceMesh.process(imgRGB)
-        print(results)
 
         if results.multi_face_landmarks:
             # Get the first face (MediaPipe can detect multiple, but we use only first for dlib compatibility)
@@ -106,7 +83,7 @@ class MediaPipeDetector:
 
             # Map MediaPipe's 468 landmarks to dlib's 68 landmarks
             dlib_points = []
-            for mp_idx in self.MEDIAPIPE_TO_DLIB_MAP:
+            for mp_idx in range(self.num_landmarks):
                 if mp_idx < len(all_points):
                     dlib_points.append(all_points[mp_idx])
                 else:
