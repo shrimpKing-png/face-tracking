@@ -177,7 +177,7 @@ class FaceTracker:
         if self.use_optical_flow and dlib_landmarks and prev_points is not None:
             return self._apply_hybrid_smoothing(frame, dlib_landmarks, prev_points)
 
-        # Strategy 2 (Fallback): Optical flow only (if dlib failed but we were tracking).
+        # Strategy 2 (Fallback): Optical flow only (if dlib failed, but we were tracking).
         elif self.use_optical_flow and prev_points is not None:
             return self._apply_optical_flow_only(frame, prev_points)
 
@@ -227,8 +227,11 @@ class FaceTracker:
         flow_points, status, _ = self.optical_flow.track(frame)
         # Validate to prevent points from jumping on failed tracks.
         valid_points = self.optical_flow.validate_tracking(flow_points, prev_points, status)
+        return self.compute_final_positions_ts(valid_points, prev_points)
 
-        final_positions = self._apply_temporal_smoothing(valid_points.reshape(-1, 2))
+    def compute_final_positions_ts(self, current_points: np.ndarray, prev_points) -> np.ndarray:
+        """Compute the positions using temporal smoothing"""
+        final_positions = self._apply_temporal_smoothing(current_points.reshape(-1, 2))
 
         motion_mags = np.linalg.norm(final_positions - prev_points.reshape(-1, 2), axis=1)
         self.history.log_motion_vector(motion_mags)
@@ -238,12 +241,7 @@ class FaceTracker:
     def _apply_dlib_only(self, dlib_landmarks, prev_points):
         """Uses only dlib, with optional temporal smoothing."""
         dlib_points = landmark_processor.landmarks_to_points(dlib_landmarks)
-        final_positions = self._apply_temporal_smoothing(dlib_points.reshape(-1, 2))
-
-        motion_mags = np.linalg.norm(final_positions - prev_points.reshape(-1, 2), axis=1)
-        self.history.log_motion_vector(motion_mags)
-
-        return final_positions.reshape(-1, 1, 2)
+        return self.compute_final_positions_ts(dlib_points, prev_points)
 
     def _apply_temporal_smoothing(self, positions):
         """Applies the weighted moving average if enabled and updates history."""
@@ -276,64 +274,54 @@ class FaceTracker:
             return self.raw_landmarks_per_frame[frame_index]
         return None
 
-    def get_motion_dataframe(self):
+    def ft_lndmrk_outline(self, frame_index: int,
+                          frame: np.ndarray, masks: List[List[int]]):
         """
-        Builds and returns a pandas DataFrame of the motion analysis by calling
-        the MotionAnalyzer component.
+        Face tracking function that uses smoothed landmarks from FaceTracker
+
+        Args:
+            self: Initialized FaceTracker instance
+            frame_index: Current frame index
+            frame: Current frame
+            masks: List of landmark indices for each mask
+
+        Returns:
+            Tuple of (processed_image, masked_images, new_masks)
         """
-        return self.motion_analyzer.build_motion_stat_df(
-            self.history.motion_vectors, self.num_landmarks
-        )
+        img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame))
 
+        # Get smoothed landmarks for this frame (prioritize smoothed, fallback to original)
+        dst_landmarks = self.get_smoothed_landmarks(frame_index)
 
-def facetracking_outline_smooth(face_tracker: FaceTracker, frame_index: int,
-                                frame: np.ndarray, masks: List[List[int]]):
-    """
-    Face tracking function that uses smoothed landmarks from FaceTracker
+        if dst_landmarks is None:
+            print("No landmarks found!")
+            dst_landmarks = self.get_original_landmarks(frame_index)
 
-    Args:
-        face_tracker: Initialized FaceTracker instance
-        frame_index: Current frame index
-        frame: Current frame
-        masks: List of landmark indices for each mask
+        if dst_landmarks is None:
+            return img_normalized, None, None
 
-    Returns:
-        Tuple of (processed_image, masked_images, new_masks)
-    """
-    img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame))
+        # Apply masks using smoothed landmarks
+        newmasks_list = []
+        masked_images = []
 
-    # Get smoothed landmarks for this frame (prioritize smoothed, fallback to original)
-    dst_landmarks = face_tracker.get_smoothed_landmarks(frame_index)
+        for landmark_list in masks:
+            masked_image, newmask = MaskGenerator.define_mask_from_landmark(
+                img_normalized, dst_landmarks, landmark_list
+            )
+            masked_images.append(masked_image)
+            newmasks_list.append(newmask)
 
-    if dst_landmarks is None:
-        print("No landmarks found!")
-        dst_landmarks = face_tracker.get_original_landmarks(frame_index)
+        # Visualize landmarks
+        landmark_points = []
+        for i in range(dst_landmarks.num_parts):
+            point = dst_landmarks.part(i)
+            landmark_points.append((point.x, point.y))
 
-    if dst_landmarks is None:
-        return img_normalized, None, None
+        # Draw landmarks on image
+        img_normalized = cv.cvtColor(img_normalized, cv.COLOR_GRAY2BGR)
+        for i, (x, y) in enumerate(landmark_points):
+            cv.circle(img_normalized, (x, y), 3, (0, 255, 0), -1)
+            cv.putText(img_normalized, str(i), (x + 5, y - 5),
+                       cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
 
-    # Apply masks using smoothed landmarks
-    newmasks_list = []
-    masked_images = []
-
-    for landmark_list in masks:
-        masked_image, newmask = MaskGenerator.define_mask_from_landmark(
-            img_normalized, dst_landmarks, landmark_list
-        )
-        masked_images.append(masked_image)
-        newmasks_list.append(newmask)
-
-    # Visualize landmarks
-    landmark_points = []
-    for i in range(dst_landmarks.num_parts):
-        point = dst_landmarks.part(i)
-        landmark_points.append((point.x, point.y))
-
-    # Draw landmarks on image
-    img_normalized = cv.cvtColor(img_normalized, cv.COLOR_GRAY2BGR)
-    for i, (x, y) in enumerate(landmark_points):
-        cv.circle(img_normalized, (x, y), 3, (0, 255, 0), -1)
-        cv.putText(img_normalized, str(i), (x + 5, y - 5),
-                   cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
-
-    return img_normalized, masked_images, newmasks_list
+        return img_normalized, masked_images, newmasks_list
