@@ -8,7 +8,7 @@ Last Update: 25JUNE2025
 import numpy as np
 import cv2 as cv
 from typing import List
-from src.processing.frame_processor import normalize_frame
+from face_tracking.processing.frame_processor import normalize_frame
 
 class MaskGenerator:
     @staticmethod

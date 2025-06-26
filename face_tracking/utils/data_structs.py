@@ -6,7 +6,7 @@ Last Update: 25JUNE2025
 """
 
 import numpy as np
-import src.config.settings as cfg
+import face_tracking.config.settings as cfg
 
 
 class TrackingHistory:

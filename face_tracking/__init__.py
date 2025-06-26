@@ -5,9 +5,9 @@ Last Update: 25JUNE2025
 Author: GPAULL
 """
 
-from src.core import *
-from src.processing import *
-from src.tracking import *
+from face_tracking.core import *
+from face_tracking.processing import *
+from face_tracking.tracking import *
 
 
 __all__ = [

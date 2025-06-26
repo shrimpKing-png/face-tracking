@@ -7,7 +7,7 @@ Last Update: 25JUNE2025
 
 import numpy as np
 import pandas as pd
-from src.utils import TrackingHistory
+from face_tracking.utils import TrackingHistory
 
 
 class MotionAnalyzer:
