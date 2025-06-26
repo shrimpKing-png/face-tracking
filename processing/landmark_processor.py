@@ -21,7 +21,7 @@ def landmarks_to_points(landmarks) -> np.ndarray:
         A numpy array of shape (num_points, 1, 2).
     """
     if landmarks is None:
-        return None
+        raise ValueError('No landmarks provided')
 
     points = np.array([[part.x, part.y] for part in landmarks.parts()], dtype=np.float32)
     return points.reshape(-1, 1, 2)
