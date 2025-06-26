@@ -90,7 +90,7 @@ class MaskGenerator:
         roi_complete = False
 
         def mouse_callback(event, x, y, flags, param):
-            nonlocal selected_points, selected_indices, roi_complete, display_img
+            nonlocal roi_complete
 
             if event == cv.EVENT_LBUTTONDOWN and not roi_complete:
                 # Find the closest landmark point
@@ -145,8 +145,8 @@ class MaskGenerator:
 
             # Reset selection
             if key == ord('r'):
-                selected_points = []
-                selected_indices = []
+                selected_points.clear()
+                selected_indices.clear()
                 roi_complete = False
                 # Redraw original image with landmarks
                 display_img = img.copy()
