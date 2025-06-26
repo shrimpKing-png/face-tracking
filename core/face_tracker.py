@@ -17,7 +17,7 @@ from processing import landmark_processor, frame_processor
 from processing.smoothing import SmoothingEngine
 from core.motion_analysis import MotionAnalyzer
 from utils.data_structs import TrackingHistory
-from core.mask_operations import MaskGenerator
+from utils.mask_operations import MaskGenerator
 
 
 class FaceTracker:
