@@ -53,6 +53,8 @@ class OpticalFlowTracker:
             initial_points (np.ndarray): The initial set of points to track,
                 with shape (num_points, 1, 2).
         """
+        if initial_points.dtype != np.float32:
+            initial_points = initial_points.astype(np.float32)
         self.prev_gray = initial_frame
         self.prev_points = initial_points
 
@@ -91,20 +93,6 @@ class OpticalFlowTracker:
         self.prev_gray = current_frame.copy()
 
         return next_points, status, error
-
-    def update_tracked_points(self, points: np.ndarray) -> None:
-        """
-        Updates the points to be tracked for the next call to `track`.
-
-        This should be called after processing the results of a `track` call,
-        for instance, after smoothing or combining the tracked points with
-        new detections.
-
-        Args:
-            points (np.ndarray): The new set of points to track from the
-                most recent frame. Shape (num_points, 1, 2).
-        """
-        self.prev_points = points
 
     @staticmethod
     def validate_tracking(
