@@ -156,11 +156,10 @@ class FaceTracker:
 
             # Convert points back to a landmark object and store the result.
             if final_points is not None:
+                if self.use_optical_flow:
+                    self.optical_flow.initialize(frames[i], final_points)
                 final_landmarks = landmark_processor.points_to_landmarks(final_points)
                 self.smoothed_landmarks_per_frame.append(final_landmarks)
-                # Update optical flow with the latest smoothed points for the next iteration.
-                if self.use_optical_flow:
-                    self.optical_flow.update_tracked_points(final_points)
             else:
                 self.smoothed_landmarks_per_frame.append(None)
                 # If tracking is lost, log zero motion to avoid breaking motion analysis.

@@ -67,7 +67,7 @@ class OpticalFlowTracker:
         updates its internal previous frame state to prepare for the next call.
 
         Note: This method does not update the points to be tracked for the next
-        iteration. Call `update_tracked_points` with the final (e.g., smoothed)
+        iteration. Call `initialize` with the final (e.g., smoothed)
         points to complete the tracking cycle.
 
         Args:
