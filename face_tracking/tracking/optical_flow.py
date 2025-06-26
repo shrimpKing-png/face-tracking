@@ -53,6 +53,8 @@ class OpticalFlowTracker:
             initial_points (np.ndarray): The initial set of points to track,
                 with shape (num_points, 1, 2).
         """
+        if initial_frame.ndim != 2:
+            initial_frame = cv.cvtColor(initial_frame, cv.COLOR_BGR2GRAY)
         if initial_points.dtype != np.float32:
             initial_points = initial_points.astype(np.float32)
         self.prev_gray = initial_frame
