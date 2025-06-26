@@ -28,7 +28,7 @@ def normalize_frame(arr, imgmask):
 
     mask = np.array(imgmask)
     bool_mask = mask.astype(bool)
-    new_arr = np.array(arr).astype(np.uint8)
+    new_arr = np.array(arr)
     """
     get values of just the face without any zeros, etc
     """
@@ -43,6 +43,6 @@ def normalize_frame(arr, imgmask):
 
     "get the new max value and divide all values by the max value"
     maxval = np.max(new_arr)
-    new_arr = new_arr / maxval if maxval != 0 else np.zeros_like(new_arr)
-    return new_arr * 255
+    new_arr = new_arr * 255 / maxval if maxval != 0 else np.zeros_like(new_arr)
+    return new_arr.astype(np.uint8)
 
