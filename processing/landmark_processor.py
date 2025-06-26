@@ -23,7 +23,7 @@ def landmarks_to_points(landmarks) -> np.ndarray:
     if landmarks is None:
         raise ValueError('No landmarks provided')
 
-    points = np.array([[part.x, part.y] for part in landmarks.parts()], dtype=np.float32)
+    points = np.array([[landmarks.part(n).x, landmarks.part(n).y] for n in range(landmarks.num_parts)], dtype=np.float32)
     return points.reshape(-1, 1, 2)
 
 
