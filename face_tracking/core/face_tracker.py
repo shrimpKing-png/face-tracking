@@ -34,7 +34,8 @@ class FaceTracker:
     """
 
     def __init__(self, use_optical_flow: bool = cfg.USE_OPTICAL_FLOW,
-                 use_moving_average: bool = cfg.USE_MOVING_AVERAGE, num_landmarks=cfg.NUM_LANDMARKS, use_neighbors=cfg.USE_NEIGHBORS_TRANSFORM, landmark_detector='dlib'):
+                 use_moving_average: bool = cfg.USE_MOVING_AVERAGE, num_landmarks=cfg.NUM_LANDMARKS,
+                 use_neighbors=cfg.USE_NEIGHBORS_TRANSFORM, landmark_detector='dlib'):
         """
         Initializes the FaceTracker and its components.
 
