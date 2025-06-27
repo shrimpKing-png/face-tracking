@@ -65,9 +65,9 @@ def update_mask_positions_neighbors(org, dst, masks: list, n_points=10, stored_m
     updated_masks = []
     if stored_mask_neighbors is None:
         use_old_neighbors = False
+        stored_mask_neighbors = []
     else:
         use_old_neighbors = True
-        stored_mask_neighbors = []
     for i, mask in enumerate(masks):
         if not use_old_neighbors:
             # Get the center of the current mask
