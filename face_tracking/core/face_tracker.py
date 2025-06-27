@@ -19,7 +19,7 @@ from face_tracking.core.motion_analysis import MotionAnalyzer
 from face_tracking.utils import TrackingHistory
 from face_tracking.utils import MaskGenerator
 from face_tracking.config import settings as cfg
-from face_tracking.core.mask_ops import update_mask_positions
+from face_tracking.core.mask_ops import update_mask_positions, update_mask_positions_neighbors
 
 
 class FaceTracker:
@@ -34,7 +34,7 @@ class FaceTracker:
     """
 
     def __init__(self, use_optical_flow: bool = cfg.USE_OPTICAL_FLOW,
-                 use_moving_average: bool = cfg.USE_MOVING_AVERAGE, num_landmarks=cfg.NUM_LANDMARKS, landmark_detector='dlib'):
+                 use_moving_average: bool = cfg.USE_MOVING_AVERAGE, num_landmarks=cfg.NUM_LANDMARKS, use_neighbors=cfg.USE_NEIGHBORS_TRANSFORM, landmark_detector='dlib'):
         """
         Initializes the FaceTracker and its components.
 
@@ -51,6 +51,7 @@ class FaceTracker:
         self.use_optical_flow = use_optical_flow
         self.use_moving_average = use_moving_average
         self.num_landmarks = num_landmarks
+        self.use_neighbors = use_neighbors
 
         # --- Component Initialization ---
         # Each component has a single, well-defined responsibility.
@@ -66,6 +67,7 @@ class FaceTracker:
         self.raw_landmarks_per_frame = []
         # Stores the final, smoothed landmark result for each frame.
         self.smoothed_landmarks_per_frame = []
+        self.mask_neighbors = None
 
         self._print_initialization_status()
 
@@ -362,6 +364,10 @@ class FaceTracker:
             msk_gen = MaskGenerator()
             newmasks_list, masked_images = msk_gen.apply_masks(img_normalized, dst_landmarks, masks)
         else:
+            if self.use_neighbors:
+                newmasks_list, neighbors = update_mask_positions_neighbors(org_landmarks, dst_landmarks,
+                                                                           masks, self.mask_neighbors)
+                self.mask_neighbors = neighbors
             newmasks_list = update_mask_positions(org_landmarks, dst_landmarks, masks)
             masked_images = [img_normalized * mask for mask in newmasks_list]
 

@@ -34,6 +34,7 @@ DECAY_FACTOR = 0.8
 # This is great for debugging or for users who may only want a subset of the functionality.
 USE_OPTICAL_FLOW = True
 USE_MOVING_AVERAGE = True
+USE_NEIGHBORS_TRANSFORM = False
 
 # --- Optical Flow Parameters ---
 # Configuration for the Lucas-Kanade optical flow algorithm.
