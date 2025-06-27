@@ -330,7 +330,9 @@ class FaceTracker:
     def ft_lndmrk_outline(self, frame_index: int,
                           frame: np.ndarray, masks: List[List[int]]):
         """
-        Face tracking function that uses smoothed landmarks from FaceTracker
+        Uses landmarks from FaceTracker() to plot a polyfill mask on an image
+        Provide the list of landmark indices that outline the mask
+        This func will create a mask and apply it to the image provided.
 
         Args:
             self: Initialized FaceTracker instance
