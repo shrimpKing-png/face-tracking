@@ -16,5 +16,6 @@ from .motion_analysis import MotionAnalyzer
 __all__ = [
     # 'FaceTracker',  # Uncomment when FaceTracker is implemented in this module
     'MotionAnalyzer',
-    'FaceTracker'
+    'FaceTracker',
+    'mask_ops'
 ]

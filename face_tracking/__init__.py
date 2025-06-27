@@ -9,6 +9,7 @@ from face_tracking.core import MotionAnalyzer, FaceTracker
 from face_tracking.tracking import DlibDetector, MediaPipeDetector, OpticalFlowTracker
 from face_tracking.utils import general, visualizations
 from face_tracking.utils import MaskGenerator
+from face_tracking.core import mask_ops
 from face_tracking.processing import (normalize_frame,
                                       landmarks_to_points,
                                       points_to_landmarks,
@@ -28,5 +29,6 @@ __all__ = [
     'general',
     'visualizations',
     'utils',
-    'config'
+    'config',
+    'mask_ops'
 ]

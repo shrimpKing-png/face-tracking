@@ -9,11 +9,7 @@ import warnings
 import numpy as np
 import cv2 as cv
 from typing import List
-
-
-# Using relative imports for library structure
 from face_tracking.tracking.mediapipe_detector import MediaPipeDetector
-from face_tracking.config import settings as cfg
 from face_tracking.tracking.dlib_detector import DlibDetector
 from face_tracking.tracking.mediapipe_detector import MediaPipeDetector
 from face_tracking.tracking.optical_flow import OpticalFlowTracker
@@ -22,6 +18,8 @@ from face_tracking.processing.smoothing import SmoothingEngine
 from face_tracking.core.motion_analysis import MotionAnalyzer
 from face_tracking.utils import TrackingHistory
 from face_tracking.utils import MaskGenerator
+from face_tracking.config import settings as cfg
+from face_tracking.core.mask_ops import update_mask_positions
 
 
 class FaceTracker:
