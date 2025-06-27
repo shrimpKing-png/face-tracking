@@ -180,7 +180,7 @@ class MaskGenerator:
             print("No faces detected!")
             return []
 
-        landmarks, faces, num_faces, bounding_box = result
+        landmarks, faces, num_faces = result
         print(f"Found {num_faces} face(s)")
 
         # Select ROI from landmarks

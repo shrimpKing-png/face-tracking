@@ -67,6 +67,4 @@ class DlibDetector:
                 print("No face selected, using face 1.")
                 correct_face_num = 1
             cv.destroyAllWindows()
-            return (all_landmarks[correct_face_num - 1],
-                    faces[correct_face_num - 1],
-                    num_faces)
+            return all_landmarks[correct_face_num - 1], faces[correct_face_num - 1], num_faces
