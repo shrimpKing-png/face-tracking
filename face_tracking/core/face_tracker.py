@@ -326,7 +326,7 @@ class FaceTracker:
         return None
 
     def ft_lndmrk_outline(self, frame_index: int,
-                          frame: np.ndarray, masks: List[List[int]]):
+                          frame: np.ndarray, masks: List[List[int]] or List[np.ndarray], org_landmarks=None):
         """
         Uses landmarks from FaceTracker() to plot a polyfill mask on an image
         Provide the list of landmark indices that outline the mask
@@ -337,6 +337,7 @@ class FaceTracker:
             frame_index: Current frame index
             frame: Current frame
             masks: List of landmark indices for each mask
+            org_landmarks: The origin landmarks detected from reference image (if you're not using polyfill method)
 
         Returns:
             Tuple of (processed_image, masked_images, new_masks)
@@ -354,15 +355,12 @@ class FaceTracker:
             return img_normalized, None, None
 
         # Apply masks using smoothed landmarks
-        newmasks_list = []
-        masked_images = []
-
-        for landmark_list in masks:
-            masked_image, newmask = MaskGenerator.define_mask_from_landmark(
-                img_normalized, dst_landmarks, landmark_list
-            )
-            masked_images.append(masked_image)
-            newmasks_list.append(newmask)
+        if org_landmarks is None:
+            msk_gen = MaskGenerator()
+            newmasks_list, masked_images = msk_gen.apply_masks(img_normalized, dst_landmarks, masks)
+        else:
+            newmasks_list = update_mask_positions(org_landmarks, dst_landmarks, masks)
+            masked_images = [img_normalized * mask for mask in newmasks_list]
 
         # Visualize landmarks
         landmark_points = []
