@@ -5,12 +5,15 @@ Last Update: 25JUNE2025
 Author: GPAULL
 """
 
-from face_tracking.core import *
-from face_tracking.processing import *
-from face_tracking.tracking import *
-from .utils import general
-from .utils import visualizations
-
+from face_tracking.core import MotionAnalyzer, FaceTracker
+from face_tracking.tracking import DlibDetector, MediaPipeDetector, OpticalFlowTracker
+from face_tracking.utils import general, visualizations
+from face_tracking.utils import MaskGenerator
+from face_tracking.processing import (normalize_frame,
+                                      landmarks_to_points,
+                                      points_to_landmarks,
+                                      SmoothingEngine,
+                                      SmoothedLandmarks)
 
 __all__ = [
     "MaskGenerator",
@@ -23,5 +26,7 @@ __all__ = [
     'DlibDetector',
     'OpticalFlowTracker',
     'general',
-    'visualizations'
+    'visualizations',
+    'utils',
+    'config'
 ]

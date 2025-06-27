@@ -93,7 +93,7 @@ tracker = FaceTracker(
 video_frames = ft.utils.video_to_list(ft.utils.filebrowser(select_directory=True))
 
 # Process the frames
-tracker.process_frames(video_frames)
+tracker.batch_process_frames(video_frames)
 
 # Get the smoothed landmarks for a specific frame
 frame_index = 10

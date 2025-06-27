@@ -2,7 +2,7 @@
 """
 core/face_tracker.py
 Created on Wed Jun 25 20:10:25 2025
-Last Update: 25JUNE2025
+Last Update: 27JUNE2025
 @author: GPAULL
 """
 import warnings
@@ -12,7 +12,7 @@ from typing import List
 
 
 # Using relative imports for library structure
-from face_tracking.tracking import MediaPipeDetector
+from face_tracking.tracking.mediapipe_detector import MediaPipeDetector
 from face_tracking.config import settings as cfg
 from face_tracking.tracking.dlib_detector import DlibDetector
 from face_tracking.tracking.mediapipe_detector import MediaPipeDetector
@@ -20,8 +20,8 @@ from face_tracking.tracking.optical_flow import OpticalFlowTracker
 from face_tracking.processing import landmark_processor, frame_processor
 from face_tracking.processing.smoothing import SmoothingEngine
 from face_tracking.core.motion_analysis import MotionAnalyzer
-from face_tracking.utils.data_structs import TrackingHistory
-from face_tracking.utils.mask_operations import MaskGenerator
+from face_tracking.utils import TrackingHistory
+from face_tracking.utils import MaskGenerator
 
 
 class FaceTracker:
@@ -84,7 +84,7 @@ class FaceTracker:
         if not self.use_optical_flow and not self.use_moving_average:
             print("Warning: Both smoothing methods are disabled. Using raw dlib detection only.")
 
-    def process_frames(self, frames: List[np.ndarray]):
+    def batch_process_frames(self, frames: List[np.ndarray]):
         """
         Main processing function to detect and track facial landmarks across a list of frames.
         This function orchestrates the entire pipeline from detection to smoothing.
@@ -112,6 +112,55 @@ class FaceTracker:
         self._compute_smoothing_pipeline(normalized_frames)
 
         print("Face tracking processing complete!")
+
+    def process_frame(self, frame: np.ndarray):
+        """
+        Processes a single frame to detect and track facial landmarks.
+
+        On the first call, it initializes the smoothing history. On subsequent calls,
+        it processes the frame using the stored history.
+
+        Args:
+            frame (np.ndarray): A single video frame (in BGR or Grayscale format).
+
+        Returns:
+            The smoothed landmarks for the frame.
+        """
+        normalized_frame = self._normalize_frame(frame)
+        dlib_landmarks = self.detector.extract_faces(normalized_frame)[0]
+        self.raw_landmarks_per_frame.append(dlib_landmarks)
+
+        if not self.smoothed_landmarks_per_frame:
+            # First frame initialization
+            if dlib_landmarks is None:
+                print("Error: Could not detect landmarks in the first frame. Cannot proceed.")
+                self.smoothed_landmarks_per_frame.append(None)
+                return None
+
+            self.smoothed_landmarks_per_frame.append(dlib_landmarks)
+            first_points = landmark_processor.landmarks_to_points(dlib_landmarks)
+
+            if self.use_moving_average:
+                self.history.add_position_to_history(first_points.reshape(-1, 2))
+            if self.use_optical_flow:
+                self.optical_flow.initialize(normalized_frame, first_points)
+
+            self.history.log_motion_vector(np.zeros(self.num_landmarks))
+            return dlib_landmarks
+        else:
+            prev_smoothed_points = landmark_processor.landmarks_to_points(self.smoothed_landmarks_per_frame[-1])
+            final_points = self._process_single_frame(normalized_frame, dlib_landmarks, prev_smoothed_points)
+
+            if final_points is not None:
+                if self.use_optical_flow:
+                    self.optical_flow.initialize(normalized_frame, final_points)
+                final_landmarks = landmark_processor.points_to_landmarks(final_points)
+                self.smoothed_landmarks_per_frame.append(final_landmarks)
+                return final_landmarks
+            else:
+                self.smoothed_landmarks_per_frame.append(None)
+                self.history.log_motion_vector(np.zeros(self.num_landmarks))
+                return None
 
     @staticmethod
     def _normalize_frame(frame: np.ndarray) -> np.ndarray:
@@ -281,7 +330,9 @@ class FaceTracker:
     def ft_lndmrk_outline(self, frame_index: int,
                           frame: np.ndarray, masks: List[List[int]]):
         """
-        Face tracking function that uses smoothed landmarks from FaceTracker
+        Uses landmarks from FaceTracker() to plot a polyfill mask on an image
+        Provide the list of landmark indices that outline the mask
+        This func will create a mask and apply it to the image provided.
 
         Args:
             self: Initialized FaceTracker instance

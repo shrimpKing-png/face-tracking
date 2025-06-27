@@ -9,7 +9,7 @@ Last Update: 25JUNE2025
 import dlib
 import numpy as np
 import cv2 as cv
-import face_tracking.config.settings as cfg
+from face_tracking.config import settings as cfg
 
 
 class DlibDetector:
@@ -67,6 +67,4 @@ class DlibDetector:
                 print("No face selected, using face 1.")
                 correct_face_num = 1
             cv.destroyAllWindows()
-            return (all_landmarks[correct_face_num - 1],
-                    faces[correct_face_num - 1],
-                    num_faces)
+            return all_landmarks[correct_face_num - 1], faces[correct_face_num - 1], num_faces

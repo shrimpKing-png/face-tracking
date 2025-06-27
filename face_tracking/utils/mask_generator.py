@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-utils/mask_operations.py
+utils/mask_generator.py
 Created on Wed Jun 25 20:10:25 2025
 Last Update: 25JUNE2025
 @author: GPAULL
@@ -180,7 +180,7 @@ class MaskGenerator:
             print("No faces detected!")
             return []
 
-        landmarks, faces, num_faces, bounding_box = result
+        landmarks, faces, num_faces = result
         print(f"Found {num_faces} face(s)")
 
         # Select ROI from landmarks
