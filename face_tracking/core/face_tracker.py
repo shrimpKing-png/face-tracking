@@ -43,6 +43,9 @@ class FaceTracker:
                                      Defaults to the value in config.settings.
             use_moving_average (bool): Flag to enable/disable weighted moving average.
                                        Defaults to the value in config.settings.
+            num_landmarks (int): Number of landmarks to expect from detector.
+
+            landmark_detector: the detector type to use
         """
         # --- Configuration ---
         self.use_optical_flow = use_optical_flow
