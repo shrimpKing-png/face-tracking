@@ -1,3 +1,4 @@
+import numpy as np
 from face_tracking.processing.landmark_processor import landmarks_to_points
 import skimage as ski
 
@@ -12,7 +13,8 @@ def update_mask_positions(org, dst, masks: list):
         updated_masks: [updated masks in new position calculated with estimate_transform]
     """
     org_pts, dst_pts = landmarks_to_points(org), landmarks_to_points(dst)
-
+    org_pts = np.array(org_pts).squeeze()  # (54, 1, 2) -> (54, 2)
+    dst_pts = np.array(dst_pts).squeeze()  # (54, 1, 2) -> (54, 2)
     tform = ski.transform.estimate_transform('similarity', org_pts, dst_pts)
 
     # Apply transformation to each mask
