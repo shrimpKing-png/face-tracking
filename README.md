@@ -1,4 +1,4 @@
-# Advanced Face Tracking Library
+# Face Tracking Library
 
 [![Python](https://img.shields.io/badge/Python-Any-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.10.0+-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
