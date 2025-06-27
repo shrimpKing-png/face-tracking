@@ -10,7 +10,7 @@ from pandas.core.ops import mask_ops
 
 from .data_structs import TrackingHistory
 from .general import filebrowser, list_to_video, video_to_list
-from .mask_operations import MaskGenerator
+from .mask_generator import MaskGenerator
 
 # Define the public API for the 'utils' module
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     'video_to_list',
     'list_to_video',
     'filebrowser',
-    'mask_operations'
+    'mask_generator'
 ]

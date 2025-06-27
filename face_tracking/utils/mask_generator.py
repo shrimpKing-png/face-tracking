@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-utils/mask_operations.py
+utils/mask_generator.py
 Created on Wed Jun 25 20:10:25 2025
 Last Update: 25JUNE2025
 @author: GPAULL
