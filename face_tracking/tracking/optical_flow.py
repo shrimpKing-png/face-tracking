@@ -88,6 +88,8 @@ class OpticalFlowTracker:
         if self.prev_gray is None or self.prev_points is None:
             print("Warning: OpticalFlowTracker is not initialized. Call .initialize() first.")
             return None, None, None
+        if current_frame.ndim != 2:
+            current_frame = cv.cvtColor(current_frame, cv.COLOR_BGR2GRAY)
         next_points, status, error = cv.calcOpticalFlowPyrLK(
             self.prev_gray, current_frame, self.prev_points, None, **self.lk_params
         )

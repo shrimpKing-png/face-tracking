@@ -131,7 +131,7 @@ class FaceTracker:
         Returns:
             The smoothed landmarks for the frame.
         """
-        normalized_frame = self._normalize_frame(frame)
+        normalized_frame = self._normalize_frame(frame) if np.array(frame).dtype == np.float32 else frame
         dlib_landmarks = self.detector.extract_faces(normalized_frame)[0]
         self.raw_landmarks_per_frame.append(dlib_landmarks)
 
@@ -368,7 +368,8 @@ class FaceTracker:
         else:
             if self.use_neighbors:
                 newmasks_list, neighbors = update_mask_positions_neighbors(org_landmarks, dst_landmarks,
-                                                                           masks, self.mask_neighbors)
+                                                                           masks, self.num_neighbors,
+                                                                           self.mask_neighbors)
                 self.mask_neighbors = neighbors
             newmasks_list = update_mask_positions(org_landmarks, dst_landmarks, masks)
             masked_images = [img_normalized * mask for mask in newmasks_list]
@@ -380,8 +381,8 @@ class FaceTracker:
             landmark_points.append((point.x, point.y))
 
         # Draw landmarks on image
-        # Draw landmarks on image
-        img_normalized = cv.cvtColor(img_normalized, cv.COLOR_GRAY2BGR)
+        if img_normalized.ndim == 2:
+            img_normalized = cv.cvtColor(img_normalized, cv.COLOR_GRAY2BGR)
         for i, (x, y) in enumerate(landmark_points):
             cv.circle(img_normalized, (x, y), 3, (0, 255, 0), -1)
             cv.putText(img_normalized, str(i), (x + 5, y - 5),
