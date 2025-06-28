@@ -10,35 +10,40 @@ import face_tracking as ft
 import time
 
 
-def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
+def demo_face_tracking(use_of=True, use_ma=False):
     """
     Demo version that just creates visual output with face tracking
     """
+    # Load video
+    response = ft.general.input_to_bool("Would you like to load 32bit video? (enter y / n): ")
+    videopath = ft.general.filebrowser(response)
+
+    if videopath == '':
+        print("No video selected. Exiting.")
+        return
     start_time = time.time()
     # Setup output directory
-    filename = input("Enter a file name: ")
-    output_dir = 'demo_output'
+    filename = os.path.basename(videopath)
+    output_dir = 'demo'
     os.makedirs(output_dir, exist_ok=True)
     output_name = os.path.join(output_dir, f"{filename}_demo")
-    #setup videocap
-    cap = cv.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open camera")
-        exit()
 
-    print("Press 'q' to quit")
+    # Load frames
+    frames = ft.general.video_to_list(videopath)
+    if not frames:
+        print("No frames loaded. Exiting.")
+        return
+
+    print(f"Loaded {len(frames)} frames")
 
     # Initialize face tracker
     print("Initializing face tracker...")
-    face_tracker = ft.FaceTracker(use_optical_flow=use_of, use_moving_average=use_ma, num_landmarks=468, landmark_detector=landmark_detector)
+    face_tracker = ft.FaceTracker(use_optical_flow=use_of, use_moving_average=use_ma)
     # initialize the face_tracker with first frame
-    ret, frame = cap.read()
-    if landmark_detector == 'dlib':
-        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    face_tracker.process_frame(frame)
+    face_tracker.process_frame(frames[0])
 
     # Get first frame for mask setup
-    frame = np.array(frame)
+    frame = frames[0]
     if len(frame.shape) != 2:
         frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
@@ -66,20 +71,17 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
     masknum = len(masks)
 
     # Pre-allocate arrays for frame storage
+    num_frames = len(frames)
     frame_height, frame_width = frame.shape[:2]
-    mask_array = np.zeros((10000, frame_height, frame_width * 2, 3), dtype=np.uint8)
+    mask_array = np.zeros((num_frames, frame_height, frame_width * 2, 3), dtype=np.uint8)
 
-    frame_idx = 0
+    frame_count = 0
     print("Processing frames...")
 
     # Process each frame
-    while cap.isOpened():
-        ret, frame = cap.read()
+    for frame_idx, frame in enumerate(frames):
         if frame is None:
             break
-        elif frame.ndim == 3 and landmark_detector == 'dlib':
-            frame_disp = frame.copy()
-            frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         face_tracker.process_frame(frame)
 
         # Use smoothed face tracking
@@ -104,34 +106,29 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
             viseye_lst.append(maskedimg)
 
         # Create colored visualization
-        if frame.dtype == np.float32:
-            print('normalizin frame')
-            frame_cv = ft.normalize_frame(frame, np.zeros_like(frame))
-        else:
-            frame_cv = frame
-        if 'frame_disp' in locals():
-            viseye = ft.visualizations.colored_mask_viseye(viseye_lst, frame_disp)
-        else:
-            viseye = ft.visualizations.colored_mask_viseye(viseye_lst, img)
+        viseye = ft.visualizations.colored_mask_viseye(viseye_lst, frame)
         viseye = np.hstack((img, viseye))
 
         # Display frame
         cv.imshow("Face Tracking Demo", viseye)
 
         # Store frame
-        if frame_idx < 10000:
-            mask_array[frame_idx] = viseye
-            frame_idx += 1
+        if frame_count < num_frames:
+            mask_array[frame_count] = viseye
+            frame_count += 1
 
         # Check for quit
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
 
+        # Progress update
+        if frame_idx % 30 == 0:
+            print(f"Processed frame {frame_idx}/{len(frames)}")
+
     cv.destroyAllWindows()
 
     # Save output video
     print("Saving demo video...")
-    frame_count = frame_idx
     mask_lst = [mask_array[i] for i in range(frame_count)]
     ft.general.list_to_video(mask_lst, f'{output_name}_visual_demo')
     print(f"Demo complete! Output saved as: {output_name}_visual_demo")
