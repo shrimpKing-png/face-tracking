@@ -49,8 +49,11 @@ def colored_mask_viseye(viseye_lst, frame):
 
                 # Apply the mask and color it
                 mask_indices = vmask > 0
-                colored_mask[mask_indices] = color
-
+                if np.any(mask_indices):  # Only assign if there are True values
+                    try:
+                        colored_mask[mask_indices] = color
+                    except Exception as e:
+                        print(e)
                 # Add to the combined visualization
                 viseye_bgr = cv.addWeighted(viseye_bgr, 1.0, colored_mask, 0.7, 0)
 
