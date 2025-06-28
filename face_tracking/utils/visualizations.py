@@ -45,15 +45,15 @@ def colored_mask_viseye(viseye_lst, frame):
             if i < len(mask_colors):
                 color = mask_colors[i]
                 # Create a colored version of the mask
-                colored_mask = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
-
+                if frame.ndim == 2:
+                    colored_mask = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
+                else:
+                    colored_mask = np.zeros_like(frame, dtype=np.uint8)
                 # Apply the mask and color it
-                mask_indices = vmask > 0
+                mask_indices = vmask > 0 if vmask.ndim == 2 else cv.cvtColor(vmask, cv.COLOR_BGR2GRAY) > 0
                 if np.any(mask_indices):  # Only assign if there are True values
-                    try:
-                        colored_mask[mask_indices] = color
-                    except Exception as e:
-                        print(e)
+                    colored_mask[mask_indices] = color
+
                 # Add to the combined visualization
                 viseye_bgr = cv.addWeighted(viseye_bgr, 1.0, colored_mask, 0.7, 0)
 

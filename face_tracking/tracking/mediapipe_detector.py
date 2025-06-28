@@ -57,7 +57,6 @@ class MediaPipeDetector:
             list: List containing single landmark object (or None if no face detected)
                   Format matches dlib detector output for interchangeability
         """
-        print('extracting face with mediapipe')
         # Convert frame to RGB if needed
         if len(frame.shape) == 3:
             if frame.shape[2] == 3:  # BGR

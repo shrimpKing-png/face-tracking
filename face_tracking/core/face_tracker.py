@@ -349,7 +349,8 @@ class FaceTracker:
         Returns:
             Tuple of (processed_image, masked_images, new_masks)
         """
-        img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame))
+        frame = np.array(frame)
+        img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame)) if frame.dtype == np.float32 else frame
 
         # Get smoothed landmarks for this frame (prioritize smoothed, fallback to original)
         dst_landmarks = self.get_smoothed_landmarks(frame_index)
