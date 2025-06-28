@@ -11,12 +11,16 @@ import numpy as np
 import cv2 as cv
 from face_tracking.config import settings as cfg
 import warnings
+from importlib import resources
 
 
 class DlibDetector:
     def __init__(self,
-                 detector_path=cfg.DETECTOR_PATH,
-                 predictor_path=cfg.PREDICTOR_PATH):
+                 detector_name=cfg.DETECTOR_NAME,
+                 predictor_name=cfg.PREDICTOR_NAME):
+        model_dir = resources.files('face_tracking').joinpath('dlib-models')
+        detector_path = str(model_dir.joinpath(detector_name))
+        predictor_path = str(model_dir.joinpath(predictor_name))
         self.detector = dlib.simple_object_detector(detector_path)
         self.predictor = dlib.shape_predictor(predictor_path)
         self.type = 'dlib'

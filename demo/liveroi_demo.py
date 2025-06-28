@@ -17,9 +17,7 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
     start_time = time.time()
     # Setup output directory
     filename = input("Enter a file name: ")
-    output_dir = ''
-    os.makedirs(output_dir, exist_ok=True)
-    output_name = os.path.join(output_dir, f"{filename}_demo")
+    output_name = f"{filename}_demo"
     #setup videocap
     cap = cv.VideoCapture(0)
     if not cap.isOpened():
@@ -59,7 +57,9 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
             print("No face detected in first frame. Exiting.")
             return
 
-        masks = [[67, 69, 108, 151, 337, 299, 297, 338, 10, 109, 67], [70, 156, 143, 111, 35, 124, 70], [276, 300, 383, 372, 340, 265, 353, 276]]  # Right eye region
+        masks = [[67, 69, 108, 151, 337, 299, 297, 338, 10, 109, 67],
+                 [70, 156, 143, 111, 35, 124, 70],
+                 [276, 300, 383, 372, 340, 265, 353, 276]]
 
     masknum = len(masks)
 
