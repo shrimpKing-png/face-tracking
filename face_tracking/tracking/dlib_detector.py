@@ -10,6 +10,7 @@ import dlib
 import numpy as np
 import cv2 as cv
 from face_tracking.config import settings as cfg
+import warnings
 
 
 class DlibDetector:
@@ -30,6 +31,7 @@ class DlibDetector:
         faces = self.detector(img)
         num_faces = len(faces)
         if num_faces == 0:
+            warnings.warn('No faces detected')
             return None, faces, num_faces
         elif num_faces == 1:
             # Retrieve the landmarks for the face selected
