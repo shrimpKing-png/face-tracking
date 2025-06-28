@@ -11,8 +11,8 @@ import cv2 as cv
 # Paths to the dlib models required for face and landmark detection.
 # It's good practice to manage these paths in a central config so they
 # can be easily updated if the model files are moved.
-PREDICTOR_PATH = './SF-TL54/dlib_landmark_predictor.dat'
-DETECTOR_PATH = './SF-TL54/dlib_face_detector.svm'
+PREDICTOR_NAME = 'dlib_landmark_predictor.dat'
+DETECTOR_NAME = 'dlib_face_detector.svm'
 
 # --- Model Parameters ---
 # The number of facial landmarks the model is trained to detect.
