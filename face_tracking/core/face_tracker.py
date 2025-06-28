@@ -272,7 +272,7 @@ class FaceTracker:
                 combined_positions[i] = landmark_positions[i]
             else:  # Blend based on motion magnitude.
                 is_jitter = z_scores[i] < cfg.Z_SCORE_THRESHOLD
-                d_w = cfg.LOW_MOTION_DLIB_WEIGHT if is_jitter else cfg.LANDMARK_WEIGHT
+                d_w = cfg.LOW_MOTION_LANDMARK_WEIGHT if is_jitter else cfg.LANDMARK_WEIGHT
                 f_w = cfg.LOW_MOTION_FLOW_WEIGHT if is_jitter else cfg.FLOW_WEIGHT
                 combined_positions[i] = (d_w * landmark_positions[i] + f_w * flow_positions[i])
 
