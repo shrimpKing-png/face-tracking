@@ -23,7 +23,7 @@
 
 ## 🚀 About
 
-**Advanced Face Tracking Library** is a Python library dedicated to tracking faces in videos with high precision and in real-time. It's built to provide smooth, stable landmark tracking by intelligently combining robust face detection with optical flow and advanced smoothing techniques. The primary goal is to eliminate annoying jitter, ensuring reliable tracking even in challenging video conditions.
+**Face Tracking Library** is a Python library dedicated to tracking faces in videos with high precision and in real-time. It's built to provide smooth, stable landmark tracking by intelligently combining robust face detection with optical flow and advanced smoothing techniques. The primary goal is to eliminate annoying jitter, ensuring reliable tracking even in challenging video conditions.
 
 The library utilizes well-known computer vision techniques and employs a modular architecture that ensures:
 
@@ -152,8 +152,8 @@ The library's behavior can be customized via the `config/settings.py` file. This
 ```python
 # --- Model Paths ---
 # Paths to the dlib face detector and landmark predictor models.
-PREDICTOR_PATH = './SF-TL54/dlib_landmark_predictor.dat'
-DETECTOR_PATH = './SF-TL54/dlib_face_detector.svm'
+PREDICTOR_PATH = 'face_tracking/SF-TL54/dlib_landmark_predictor.dat'
+DETECTOR_PATH = 'face_tracking/SF-TL54/dlib_face_detector.svm'
 
 # --- Core Settings ---
 # The number of landmarks your model is trained to detect.
