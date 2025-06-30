@@ -135,7 +135,7 @@ class FaceTracker:
         dlib_landmarks = self.detector.extract_faces(normalized_frame)[0]
         self.raw_landmarks_per_frame.append(dlib_landmarks)
 
-        if not self.smoothed_landmarks_per_frame:
+        if 1 > len(self.smoothed_landmarks_per_frame):
             # First frame initialization
             if dlib_landmarks is None:
                 print("Error: Could not detect landmarks in the first frame. Cannot proceed.")
