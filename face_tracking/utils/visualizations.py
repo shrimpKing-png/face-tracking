@@ -10,6 +10,21 @@ import cv2 as cv
 import numpy as np
 
 
+def visualize_landmarks(img: np.ndarray, landmarks) -> np.ndarray:
+    """Optimized landmark visualization."""
+    if img.ndim == 2:
+        img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+
+    # Vectorized landmark extraction
+    points = [(landmarks.part(i).x, landmarks.part(i).y) for i in range(landmarks.num_parts)]
+
+    # Batch drawing operations
+    for i, (x, y) in enumerate(points):
+        cv.circle(img, (x, y), 3, (0, 255, 0), -1)
+        cv.putText(img, str(i), (x + 5, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
+
+    return img
+
 def colored_mask_viseye(viseye_lst, frame):
     """
     Creates a colored visualization of multiple masks with a color key.

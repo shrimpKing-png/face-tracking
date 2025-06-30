@@ -83,3 +83,13 @@ class TrackingHistory:
             points (np.ndarray): The array of detected landmark points.
         """
         self.dlib_points_history.append(points)
+
+
+class FrameResult:
+    """Encapsulates the result of processing a single frame."""
+
+    def __init__(self, raw_landmarks, smoothed_landmarks, final_points, motion_magnitudes):
+        self.raw_landmarks = raw_landmarks
+        self.smoothed_landmarks = smoothed_landmarks
+        self.final_points = final_points
+        self.motion_magnitudes = motion_magnitudes

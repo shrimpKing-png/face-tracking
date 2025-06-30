@@ -143,4 +143,4 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
 if __name__ == "__main__":
     print("Face Tracking Visual Demo")
     print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=True, use_ma=False, landmark_detector='mediapipe')
+    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='mediapipe')
