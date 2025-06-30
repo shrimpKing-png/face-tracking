@@ -14,10 +14,7 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
     """
     Demo version that just creates visual output with face tracking
     """
-    # Load video
-    response = ft.general.input_to_bool("Would you like to load 32bit video? (enter y / n): ")
-    videopath = ft.general.filebrowser(response)
-
+    videopath = '/Users/gavinpaull/Documents/PycharmProjects/face-tracking/demo/Kacey'
     if videopath == '':
         print("No video selected. Exiting.")
         return
@@ -141,4 +138,4 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
 if __name__ == "__main__":
     print("Face Tracking Visual Demo")
     print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='dlib', num_landmarks=54)
+    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='mediapipe', num_landmarks=468)
