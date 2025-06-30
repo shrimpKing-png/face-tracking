@@ -16,9 +16,9 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
     """
     start_time = time.time()
     # Setup output directory
-    filename = input("Enter a file name: ")
+    filename = 'demo'  # input("Enter a file name: ")
     output_name = f"{filename}_demo"
-    #setup videocap
+    #  setup videocap
     cap = cv.VideoCapture(0)
     if not cap.isOpened():
         print("Error: Could not open camera")
@@ -65,7 +65,8 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
 
     # Pre-allocate arrays for frame storage
     frame_height, frame_width = frame.shape[:2]
-    mask_array = np.zeros((10000, frame_height, frame_width * 2, 3), dtype=np.uint8)
+    video_length = 200
+    mask_array = np.zeros((video_length, frame_height, frame_width * 2, 3), dtype=np.uint8)
 
     frame_idx = 0
     print("Processing frames...")
@@ -115,14 +116,16 @@ def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
 
         # Display frame
         cv.imshow("Face Tracking Demo", viseye)
-        if frame_idx % 60 == 0:
+        if frame_idx % 60 == 0 and frame_idx != 0:
             fps = frame_idx / int(time.time() - start_time)
             print(f'Elapsed time: {int(time.time() - start_time)}, FPS: {fps:.2f}fps')
 
         # Store frame
-        if frame_idx < 10000:
+        if frame_idx < video_length:
             mask_array[frame_idx] = viseye
             frame_idx += 1
+        else:
+            break
 
         # Check for quit
         if cv.waitKey(1) & 0xFF == ord('q'):

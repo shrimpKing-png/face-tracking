@@ -6,7 +6,7 @@ authors = [
     {name = "gpaull", email = "gavin.m.paull@gmail.com"}
 ]
 readme = "README.md"
-# include = ["SF-TL54/dlib_face_detector.svm", "SF-TL54/dlib_landmark_predictor.dat"]
+include = ["SF-TL54/dlib_face_detector.svm", "SF-TL54/dlib_landmark_predictor.dat"]
 requires-python = ">=3.10"
 dependencies = [
     "mediapipe (>=0.10.21,<0.11.0)",

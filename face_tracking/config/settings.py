@@ -6,6 +6,7 @@ Last Update: 25JUNE2025
 """
 
 import cv2 as cv
+import numpy as np
 
 # --- File Paths ---
 # Paths to the dlib models required for face and landmark detection.
@@ -63,3 +64,17 @@ FLOW_WEIGHT = 0
 # optical flow prediction when the face is relatively still.
 LOW_MOTION_LANDMARK_WEIGHT = 1
 LOW_MOTION_FLOW_WEIGHT = 0
+
+# Colors for mask visualization.
+MASK_COLORS = np.array([
+    [0, 0, 255],  # Red
+    [0, 255, 0],  # Green
+    [255, 0, 0],  # Blue
+    [0, 255, 255],  # Yellow
+    [255, 0, 255],  # Magenta
+    [255, 255, 0],  # Cyan
+    [128, 0, 128],  # Purple
+    [255, 165, 0],  # Orange
+    [0, 128, 128],  # Teal
+    [128, 128, 0],  # Olive
+], dtype=np.uint8)

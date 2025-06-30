@@ -8,6 +8,8 @@ Last Update: 25JUNE2025
 
 import cv2 as cv
 import numpy as np
+from face_tracking.config import settings as cfg
+from face_tracking.processing.landmark_processor import landmarks_to_points
 
 
 def visualize_landmarks(img: np.ndarray, landmarks) -> np.ndarray:
@@ -25,7 +27,7 @@ def visualize_landmarks(img: np.ndarray, landmarks) -> np.ndarray:
 
     return img
 
-def colored_mask_viseye(viseye_lst, frame):
+def colored_mask_viseye(viseye_lst, frame, mask_colors=cfg.MASK_COLORS):
     """
     Creates a colored visualization of multiple masks with a color key.
 
@@ -36,70 +38,79 @@ def colored_mask_viseye(viseye_lst, frame):
     Returns:
         numpy.ndarray: BGR image with colored masks and color key
     """
-    # Define colors for each mask (BGR format)
-    mask_colors = [
-        (0, 0, 255),  # Red
-        (0, 255, 0),  # Green
-        (255, 0, 0),  # Blue
-        (0, 255, 255),  # Yellow
-        (255, 0, 255),  # Magenta
-        (255, 255, 0),  # Cyan
-        (128, 0, 128),  # Purple
-        (255, 165, 0),  # Orange
-        (0, 128, 128),  # Teal
-        (128, 128, 0),  # Olive
-    ]
+    # Fast path for empty mask list
+    if not viseye_lst:
+        return cv.cvtColor(frame, cv.COLOR_GRAY2BGR) if frame.ndim == 2 else frame.copy()
 
-    # Convert grayscale frame to BGR for color visualization
-    if len(viseye_lst) > 0:
-        # Start with a black BGR image
-        viseye_bgr = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
+    frame_height, frame_width = frame.shape[:2]
+    num_masks = min(len(viseye_lst), len(mask_colors))
 
-        # Add each mask with its unique color
-        for i, vmask in enumerate(viseye_lst):
-            if i < len(mask_colors):
-                color = mask_colors[i]
-                # Create a colored version of the mask
-                if frame.ndim == 2:
-                    colored_mask = np.zeros((frame.shape[0], frame.shape[1], 3), dtype=np.uint8)
-                else:
-                    colored_mask = np.zeros_like(frame, dtype=np.uint8)
-                # Apply the mask and color it
-                mask_indices = vmask > 0 if vmask.ndim == 2 else cv.cvtColor(vmask, cv.COLOR_BGR2GRAY) > 0
-                if np.any(mask_indices):  # Only assign if there are True values
-                    colored_mask[mask_indices] = color
+    # Pre-allocate output image
+    viseye_bgr = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
 
-                # Add to the combined visualization
-                viseye_bgr = cv.addWeighted(viseye_bgr, 1.0, colored_mask, 0.7, 0)
+    # Direct pixel assignment
+    for i in range(num_masks):
+        vmask = viseye_lst[i]
+        if vmask is None:
+            continue
 
-        # Add color key in top-left corner
-        key_height = min(30 * min(len(viseye_lst), len(mask_colors)), frame.shape[0] // 3)
-        key_width = 150
+        # Get color for this mask
+        color = mask_colors[i]
 
-        # Create semi-transparent overlay for the key background
-        overlay = viseye_bgr.copy()
-        cv.rectangle(overlay, (5, 5), (key_width, key_height + 20), (0, 0, 0), -1)
-        viseye_bgr = cv.addWeighted(viseye_bgr, 0.7, overlay, 0.3, 0)
+        # mask processing - single operation
+        if vmask.ndim == 3:
+            mask_indices = cv.cvtColor(vmask, cv.COLOR_BGR2GRAY) > 0
+        else:
+            mask_indices = vmask > 0
 
-        # Add title
-        cv.putText(viseye_bgr, "Mask Key:", (10, 25), cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+        # VECTORIZED COLOR ASSIGNMENT
+        if np.any(mask_indices):
+            viseye_bgr[mask_indices] = color
 
-        # Add color swatches and numbers for each mask
-        for i in range(min(len(viseye_lst), len(mask_colors))):
-            y_pos = 45 + (i * 25)
-            color = mask_colors[i]
+    # KEY RENDERING
+    _render_color_key_optimized(viseye_bgr, num_masks, frame_height)
 
-            # Draw color swatch
-            cv.rectangle(viseye_bgr, (15, y_pos - 8), (35, y_pos + 8), color, -1)
-            cv.rectangle(viseye_bgr, (15, y_pos - 8), (35, y_pos + 8), (255, 255, 255), 1)
+    return viseye_bgr
 
-            # Add mask number in white
-            cv.putText(viseye_bgr, f"Mask {i}", (45, y_pos + 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-        return viseye_bgr
-    else:
-        # If no masks, convert grayscale to BGR
-        return cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
+def _render_color_key_optimized(viseye_bgr, num_masks, frame_height, mask_colors=cfg.MASK_COLORS):
+    """
+    Optimized color key rendering with minimal OpenCV operations.
+
+    OPTIMIZATIONS:
+    - Single overlay operation instead of multiple addWeighted calls
+    - Pre-calculated dimensions
+    - Batch text rendering
+    - Direct pixel manipulation for background
+    """
+    if num_masks == 0:
+        return
+
+    # Calculate key dimensions
+    key_height = min(30 * num_masks, frame_height // 3)
+    key_width = 150
+
+    bg_slice = viseye_bgr[5:key_height + 25, 5:key_width]
+    bg_slice.fill(0)  # Black background
+
+    # Pre-define commonly used values
+    font = cv.FONT_HERSHEY_SIMPLEX
+    white = (255, 255, 255)
+
+    # Title
+    cv.putText(viseye_bgr, "Mask Key:", (10, 25), font, 0.6, white, 1)
+
+    # BATCH RENDERING: Process all swatches in optimized loop
+    for i in range(num_masks):
+        y_pos = 45 + (i * 25)
+        color = tuple(map(int, mask_colors[i]))  # Convert to tuple once
+
+        # Color swatch - 2 rectangles
+        cv.rectangle(viseye_bgr, (15, y_pos - 8), (35, y_pos + 8), color, -1)
+        cv.rectangle(viseye_bgr, (15, y_pos - 8), (35, y_pos + 8), white, 1)
+
+        # Label text
+        cv.putText(viseye_bgr, f"Mask {i}", (45, y_pos + 5), font, 0.5, white, 1)
 
 # def plot_landmarks_on_frame(frame: np.ndarray, landmarks) -> np.ndarray:
 #     """ Causes issues with framevalues for some odd reason. May add back later

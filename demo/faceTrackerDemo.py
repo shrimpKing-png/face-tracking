@@ -71,7 +71,7 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
     # Pre-allocate arrays for frame storage
     num_frames = len(frames)
     frame_height, frame_width = frame.shape[:2]
-    mask_array = np.zeros((num_frames, frame_height, frame_width * 2, 3), dtype=np.uint8)
+    mask_array = np.zeros((num_frames, frame_height, frame_width * 3, 3), dtype=np.uint8)
 
     frame_count = 0
     print("Processing frames...")
@@ -104,7 +104,8 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
             viseye_lst.append(maskedimg)
 
         # Create colored visualization
-        viseye = ft.visualizations.colored_mask_viseye(viseye_lst, frame)
+        # viseye = ft.visualizations.colored_mask_viseye(viseye_lst, frame)
+        viseye = ft.visualizations.benchmark_versions(viseye_lst, frame, iterations=10)
         viseye = np.hstack((img, viseye))
 
         # Display frame
