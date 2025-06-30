@@ -138,4 +138,4 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
 if __name__ == "__main__":
     print("Face Tracking Visual Demo")
     print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='mediapipe', num_landmarks=468)
+    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='dlib', num_landmarks=54)
