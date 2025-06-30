@@ -373,33 +373,35 @@ class FaceTracker:
             return self.raw_landmarks_per_frame[frame_index]
         return None
 
+    # face_tracking/core/face_tracker.py
     def ft_lndmrk_outline(self, frame_index: int, frame: np.ndarray,
                           masks: List[List[int]], org_landmarks=None) -> Tuple:
         """
         Optimized landmark outline processing.
         Public API maintained for compatibility.
         """
-        frame = np.asarray(frame)  # More efficient than np.array
+        # np.asarray is more efficient as it avoids copying data if not necessary
+        frame = np.asarray(frame)
 
-        # Normalize once if needed
-        if frame.dtype == np.float32:
-            img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame))
-        else:
-            img_normalized = frame
+        # Normalize once if needed (no change here, was already efficient)
+        img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame)) \
+            if frame.dtype == np.float32 else frame
 
         # Get landmarks with fallback
         dst_landmarks = (self.get_smoothed_landmarks(frame_index) or
                          self.get_original_landmarks(frame_index))
 
         if dst_landmarks is None:
-            print("No landmarks found!")
+            warnings.warn(f"No landmarks found for frame_index: {frame_index}")
             return img_normalized, None, None
 
         # Apply masks
         if org_landmarks is None:
+            # The optimizations in MaskGenerator.apply_masks provide the speedup here
             msk_gen = MaskGenerator()
-            newmasks_list, masked_images = msk_gen.apply_masks(img_normalized, dst_landmarks, masks)
+            masked_images, newmasks_list = msk_gen.apply_masks(img_normalized, dst_landmarks, masks)
         else:
+            # This part of the logic remains unchanged as it handles a different use case
             if self.use_neighbors:
                 newmasks_list, self.mask_neighbors = update_mask_positions_neighbors(
                     org_landmarks, dst_landmarks, masks, self.num_neighbors, self.mask_neighbors
@@ -407,7 +409,10 @@ class FaceTracker:
             else:
                 newmasks_list = update_mask_positions(org_landmarks, dst_landmarks, masks)
 
+            # Using a generator expression can be slightly more memory-efficient
             masked_images = [img_normalized * mask for mask in newmasks_list]
 
         # Efficient landmark visualization
-        return visualize_landmarks(img_normalized, dst_landmarks), masked_images, newmasks_list
+        vis_img = visualize_landmarks(img_normalized.copy(), dst_landmarks)
+
+        return vis_img, masked_images, newmasks_list
