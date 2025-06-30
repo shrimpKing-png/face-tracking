@@ -10,7 +10,7 @@ import face_tracking as ft
 import time
 
 
-def demo_face_tracking(use_of=True, use_ma=False):
+def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=False):
     """
     Demo version that just creates visual output with face tracking
     """
@@ -24,9 +24,10 @@ def demo_face_tracking(use_of=True, use_ma=False):
     start_time = time.time()
     # Setup output directory
     filename = os.path.basename(videopath)
-    output_dir = 'demo'
+    output_dir = f'{filename}_OF{use_of}_MA{use_ma}'
     os.makedirs(output_dir, exist_ok=True)
     output_name = os.path.join(output_dir, f"{filename}_demo")
+    print(f'Output name: {output_name}')
 
     # Load frames
     frames = ft.general.video_to_list(videopath)
@@ -38,7 +39,7 @@ def demo_face_tracking(use_of=True, use_ma=False):
 
     # Initialize face tracker
     print("Initializing face tracker...")
-    face_tracker = ft.FaceTracker(use_optical_flow=use_of, use_moving_average=use_ma)
+    face_tracker = ft.FaceTracker(use_optical_flow=use_of, use_moving_average=use_ma, landmark_detector=landmark_detector, num_landmarks=num_landmarks)
     # initialize the face_tracker with first frame
     face_tracker.process_frame(frames[0])
 
@@ -130,6 +131,7 @@ def demo_face_tracking(use_of=True, use_ma=False):
     # Save output video
     print("Saving demo video...")
     mask_lst = [mask_array[i] for i in range(frame_count)]
+    face_tracker.get_motion_stats().to_csv(f'{output_name}_motion_stats.csv')
     ft.general.list_to_video(mask_lst, f'{output_name}_visual_demo')
     print(f"Demo complete! Output saved as: {output_name}_visual_demo")
     print(f"Time taken: {time.time() - start_time}s, estimated fps: {frame_count/time.time() - start_time}")
@@ -139,4 +141,4 @@ def demo_face_tracking(use_of=True, use_ma=False):
 if __name__ == "__main__":
     print("Face Tracking Visual Demo")
     print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=True, use_ma=False)
+    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='dlib', num_landmarks=54)
