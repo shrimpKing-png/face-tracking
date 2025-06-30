@@ -14,50 +14,100 @@ from face_tracking.processing.frame_processor import normalize_frame
 
 class MaskGenerator:
     @staticmethod
-    def define_mask_from_landmark(img, landmarks, landmark_list):
+    def define_mask_from_landmark(img: np.ndarray, landmarks, landmark_list: List[int]):
         """
+        Creates a masked image from a single landmark group.
+        This function is maintained for API compatibility but is no longer
+        the primary method for performance-critical operations.
 
         Args:
-            img: the input image you want to apply a mask to
-            landmarks: the landmarks detected by a dlib/mediapipe model
-            landmark_list: the list of landmarks that define the mask region's outline
+            img: The input image to apply a mask to.
+            landmarks: The landmarks detected by a model.
+            landmark_list: The list of landmarks defining the mask region.
 
         Returns:
-            masked_image: the image with the mask applied to it.
-            Esentially a cutout of the image in the shape of the
-            mask: the mask, in the same data-format as the original image (maybe change to binary later)
-
+            A tuple of (masked_image, mask).
         """
-        if type(landmark_list[0]) is not int:
+        # Ensure landmark_list contains integers
+        if landmark_list and not isinstance(landmark_list[0], int):
             landmark_list = [int(landmark) for landmark in landmark_list]
-        mask = np.zeros(img.shape)
-        mask_pts = np.array([[landmarks.part(n).x, landmarks.part(n).y] for n in landmark_list], dtype=np.int32)
-        mask = cv.fillConvexPoly(mask, mask_pts, color=1)
+
+        mask = np.zeros_like(img, dtype=np.float32)
+
+        # Pre-allocate numpy array for efficiency
+        num_points = len(landmark_list)
+        mask_pts = np.empty((num_points, 2), dtype=np.int32)
+
+        for i, n in enumerate(landmark_list):
+            part = landmarks.part(n)
+            mask_pts[i, 0] = part.x
+            mask_pts[i, 1] = part.y
+
+        cv.fillConvexPoly(mask, mask_pts, 1.0)
+
+        # Element-wise multiplication
         masked_image = img * mask
         return masked_image, mask
 
-    def apply_masks(self, frame: np.ndarray, landmarks, masks: List[List[int]], ):
+    def apply_masks(self, frame: np.ndarray, landmarks, masks: List[List[int]]):
         """
-        Creates masked images based on landmark groups.
+        Optimized creation of masked images based on landmark groups.
 
         Args:
             frame: The normalized source frame.
             landmarks: The landmarks object for the frame.
-            masks: A list of lists, where each inner list contains the landmark
+            masks: A list of lists, where each inner list contains landmark
                    indices for a specific facial feature.
 
         Returns:
-            A tuple containing a list of the generated masked images and a list
+            A tuple containing a list of generated masked images and a list
             of the corresponding mask arrays.
         """
-        masked_images = []
-        new_masks_lst = []
+        if not masks:
+            return [], []
+
+        # Prepare a list of polygons from the landmark indices
+        polygons = []
         for landmark_list in masks:
-            masked_image, new_mask = self.define_mask_from_landmark(
-                frame, landmarks, landmark_list
-            )
-            masked_images.append(masked_image)
-            new_masks_lst.append(new_mask)
+            num_points = len(landmark_list)
+            if num_points == 0:
+                continue
+
+            # Pre-allocate array for the polygon points
+            poly_pts = np.empty((num_points, 2), dtype=np.int32)
+            for i, n in enumerate(landmark_list):
+                part = landmarks.part(n)
+                poly_pts[i, 0] = part.x
+                poly_pts[i, 1] = part.y
+            polygons.append(poly_pts)
+
+        if not polygons:
+            return [], []
+
+        # Create all masks in a single, efficient operation
+        # We create a 3D array where each "slice" is a mask
+        height, width = frame.shape[:2]
+        num_masks = len(polygons)
+
+        # Determine if the frame is color or grayscale for mask creation
+        if frame.ndim == 3:
+            all_masks_np = np.zeros((num_masks, height, width, frame.shape[2]), dtype=np.float32)
+        else:
+            all_masks_np = np.zeros((num_masks, height, width), dtype=np.float32)
+
+        for i, poly in enumerate(polygons):
+            # cv.fillPoly is efficient for multiple polygons, but here we use it
+            # on each mask slice for clarity and to keep masks separate.
+            cv.fillPoly(all_masks_np[i], [poly], 1.0)
+
+        # Generate masked images using efficient element-wise multiplication
+        # The frame is broadcasted across all masks
+        masked_images_np = frame * all_masks_np
+
+        # Convert back to lists to maintain API compatibility
+        new_masks_lst = [all_masks_np[i] for i in range(num_masks)]
+        masked_images = [masked_images_np[i] for i in range(num_masks)]
+
         return masked_images, new_masks_lst
 
     @staticmethod
