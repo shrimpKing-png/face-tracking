@@ -1,6 +1,6 @@
 [project]
 name = "face-tracking"
-version = "0.1.1"
+version = "0.1.11"
 description = ""
 authors = [
     {name = "gpaull", email = "gavin.m.paull@gmail.com"}
