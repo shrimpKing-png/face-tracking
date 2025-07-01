@@ -133,11 +133,11 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
     face_tracker.get_motion_stats().to_csv(f'{output_name}_motion_stats.csv')
     ft.general.list_to_video(mask_lst, f'{output_name}_visual_demo')
     print(f"Demo complete! Output saved as: {output_name}_visual_demo")
-    print(f"Time taken: {time.time() - start_time}s, estimated fps: {frame_count/time.time() - start_time}")
+    print(f"Time taken: {time.time() - start_time}s, estimated fps: {frame_count/(time.time() - start_time)}")
     print(f"Processed {frame_count} frames")
 
 
 if __name__ == "__main__":
     print("Face Tracking Visual Demo")
     print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='dlib', num_landmarks=54)
+    demo_face_tracking(use_of=True, use_ma=True, landmark_detector='dlib', num_landmarks=54)
