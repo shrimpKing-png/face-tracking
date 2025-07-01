@@ -139,12 +139,6 @@ class FaceTracker:
             return self._normalize_frame(frame)
         return frame
 
-    def _detect_landmarks(self, frame: np.ndarray):
-        """Centralized landmark detection."""
-        landmarks = self.detector.extract_faces(frame)[0]
-        self.raw_landmarks_per_frame.append(landmarks)
-        return landmarks
-
     def _initialize_first_frame(self, landmarks, frame: np.ndarray) -> Optional[FrameResult]:
         """Initialize tracking with first valid frame."""
         if landmarks is None:
@@ -165,7 +159,7 @@ class FaceTracker:
 
         motion_mags = np.zeros(self.num_landmarks)
         self.history.log_motion_vector(motion_mags)
-
+        # Return landmarks 2 times cuz no smoothed landmarks
         return FrameResult(landmarks, landmarks, points, motion_mags)
 
     def _process_subsequent_frame(self, raw_landmarks, frame: np.ndarray) -> FrameResult:
@@ -190,7 +184,7 @@ class FaceTracker:
         Eliminates duplicate logic across different processing paths.
         """
         # Strategy selection based on available data and configuration
-        if self.use_optical_flow and raw_landmarks and prev_points is not None:
+        if self.use_moving_average and raw_landmarks and prev_points is not None:
             return self._hybrid_tracking(frame, raw_landmarks, prev_points)
         elif self.use_optical_flow and prev_points is not None:
             return self._optical_flow_only_tracking(frame, prev_points)
@@ -204,9 +198,10 @@ class FaceTracker:
             return None
 
     def _hybrid_tracking(self, frame: np.ndarray, raw_landmarks, prev_points: np.ndarray) -> np.ndarray:
-        """Optimized hybrid tracking combining landmarks and optical flow."""
-        # Get optical flow tracking
-        flow_points, status, _ = self.optical_flow.track(frame)
+        """
+        Optimized hybrid tracking combining landmarks and optical flow.
+        """
+
         landmark_points = landmark_processor.landmarks_to_points(raw_landmarks)
 
         # Compute motion analysis once
@@ -216,14 +211,16 @@ class FaceTracker:
         z_scores = self.motion_analyzer.calculate_z_scores(
             motion_mags, self.history.motion_vectors, cfg.HISTORY_WINDOW
         )
-
-        # Vectorized blending computation
-        flow_positions = flow_points.reshape(-1, 2)
-        combined_positions = self._blend_positions(
-            landmark_positions, flow_positions, status, z_scores
-        )
-
-        return self._apply_temporal_smoothing(combined_positions).reshape(-1, 1, 2)
+        if self.use_optical_flow:
+            flow_points, status, _ = self.optical_flow.track(frame)
+            # Vectorized blending computation
+            flow_positions = flow_points.reshape(-1, 2)
+            combined_positions = self._blend_positions(
+                landmark_positions, flow_positions, status, z_scores
+            )
+            return self._apply_temporal_smoothing(combined_positions).reshape(-1, 1, 2)
+        else:
+            return self._apply_temporal_smoothing(landmark_positions).reshape(-1, 1, 2)
 
     def _blend_positions(self, landmark_pos: np.ndarray, flow_pos: np.ndarray,
                          status: np.ndarray, z_scores: np.ndarray) -> np.ndarray:
@@ -332,6 +329,7 @@ class FaceTracker:
 
     def _update_state(self, result: FrameResult) -> None:
         """Centralized state update."""
+        self.raw_landmarks_per_frame.append(result.raw_landmarks)
         self.smoothed_landmarks_per_frame.append(result.smoothed_landmarks)
 
     # --- Optimized utility methods ---
