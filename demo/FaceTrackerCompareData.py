@@ -22,9 +22,9 @@ def process_video_permutation(args):
     start_time = time.time()
     # Setup output directory
     filename = os.path.basename(videopath)
-    output_dir = f'{filename}_OF{use_of}_MA{use_ma}'
+    output_dir = f'{filename}_OF{use_of}_MA{use_ma}_LD{landmark_detector}'
     os.makedirs(output_dir, exist_ok=True)
-    output_name = os.path.join(output_dir, f"{filename}_demo")
+    output_name = os.path.join(output_dir, f"{filename}")
     print(f'Output name: {output_name}')
 
     # Load frames
@@ -119,8 +119,8 @@ def process_video_permutation(args):
     print(f"Saving demo video for {videopath}...")
     mask_lst = [mask_array[i] for i in range(frame_count)]
     face_tracker.get_motion_stats().to_csv(f'{output_name}_motion_stats.csv')
-    ft.general.list_to_video(mask_lst, f'{output_name}_visual_demo')
-    print(f"Demo complete for {videopath}! Output saved as: {output_name}_visual_demo")
+    ft.general.list_to_video(mask_lst, f'{output_name}')
+    print(f"Demo complete for {videopath}! Output saved as: {output_name}")
     end_time = time.time()
     elapsed_time = end_time - start_time
     fps = frame_count / elapsed_time if elapsed_time > 0 else 0
