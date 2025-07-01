@@ -72,7 +72,7 @@ def run_live_demo():
         MASKS_TO_APPLY = []
 
     # Instantiate the threaded tracker
-    tracker = ThreadedTracker(use_optical_flow=True, use_moving_average=True, landmark_detector='mediapipe',
+    tracker = ThreadedTracker(use_optical_flow=False, use_moving_average=True, landmark_detector='mediapipe',
                               num_landmarks=468)
     tracker.start()
 
@@ -93,6 +93,7 @@ def run_live_demo():
         ret, frame = cap.read()
         if not ret:
             break
+        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         frame = cv.flip(frame, 1)
 
         # --- A. Pass frame to background thread ---
