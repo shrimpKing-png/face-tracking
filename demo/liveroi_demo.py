@@ -1,149 +1,139 @@
 # -*- coding: utf-8 -*-
 """
-Face Tracking Demo - Visual Output Only
-Streamlined version for quick demonstration
+This file contains the standalone visualization logic and an example of
+how to integrate it with the ThreadedTracker in a main application loop.
 """
-import os
 import cv2 as cv
 import numpy as np
-import face_tracking as ft
-import time
+from typing import List, Tuple, Optional
+import csv
+import warnings
 
+# Assuming these utilities are available in your project structure
+from face_tracking.utils.mask_generator import MaskGenerator
+from face_tracking.utils.visualizations import visualize_landmarks
+from face_tracking.core.threading import ThreadedTracker
+from face_tracking.processing import frame_processor
+from face_tracking.utils.visualizations import colored_mask_viseye
 
-def demo_face_tracking(use_of=True, use_ma=True, landmark_detector='mediapipe'):
+def render_visualization(
+        frame: np.ndarray,
+        landmarks,
+        masks: List[List[int]],
+        mask_generator: MaskGenerator
+) -> Tuple[np.ndarray, Optional[List[np.ndarray]], Optional[List[np.ndarray]]]:
     """
-    Demo version that just creates visual output with face tracking
+    Renders tracking visualizations on a frame using the optimized MaskGenerator logic.
+
+    Args:
+        frame: The original video frame to draw on.
+        landmarks: The landmark data (dlib or mediapipe object) for the frame.
+        masks: A list of lists, where each inner list contains landmark indices.
+        mask_generator: An instance of the MaskGenerator class.
+
+    Returns:
+        A tuple containing:
+        - The frame with landmarks visualized.
+        - A list of masked images.
+        - A list of the corresponding mask arrays.
     """
-    start_time = time.time()
-    # Setup output directory
-    filename = 'demo'  # input("Enter a file name: ")
-    output_name = f"{filename}_demo"
-    #  setup videocap
-    cap = cv.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open camera")
-        exit()
+    if landmarks is None:
+        return frame, None, None
 
-    print("Press 'q' to quit")
+    img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame)) \
+        if frame.dtype != np.uint8 else frame
 
-    # Initialize face tracker
-    print("Initializing face tracker...")
-    face_tracker = ft.FaceTracker(use_optical_flow=use_of, use_moving_average=use_ma, num_landmarks=468, landmark_detector=landmark_detector)
-    # initialize the face_tracker with first frame
-    ret, frame = cap.read()
-    if landmark_detector == 'dlib':
-        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    face_tracker.process_frame(frame)
+    # Apply masks using the provided generator, as done in the old function
+    masked_images, newmasks_list = mask_generator.apply_masks(img_normalized, landmarks, masks)
 
-    # Get first frame for mask setup
-    frame = np.array(frame)
-    if len(frame.shape) != 2:
-        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    # Create a copy for drawing to avoid modifying the array used in masking
+    vis_img = img_normalized.copy()
 
-    # Use pre-defined ROI masks (you can modify this section)
-    print("Loading ROI masks...")
+    # Efficient landmark visualization
+    vis_img = visualize_landmarks(vis_img, landmarks)
+
+    return vis_img, masked_images, newmasks_list
+
+
+# --- Example Usage in your main application (e.g., liveroi_demo.py) ---
+
+def run_live_demo():
+    """Example main loop for a live ROI demo."""
+    # --- 1. Initialization ---
     try:
-        import csv
+        print("Loading ROI masks from 'landmark_rois.csv'...")
         with open('landmark_rois.csv', 'r') as file:
             reader = csv.reader(file)
-            masks = list(reader)
-        masks = [[int(landmark) for landmark in mask] for mask in masks]
+            masks = [list(map(int, row)) for row in reader if row]
         print(f"Loaded {len(masks)} pre-defined ROI masks")
+        MASKS_TO_APPLY = masks
     except FileNotFoundError:
-        print("No pre-defined ROI file found. Creating default masks...")
-        # Create some default facial ROI masks if file doesn't exist
-        first_landmarks = face_tracker.get_original_landmarks(0)
-        if first_landmarks is None:
-            print("No face detected in first frame. Exiting.")
-            return
+        warnings.warn("'landmark_rois.csv' not found. No masks will be applied.")
+        MASKS_TO_APPLY = []
 
-        masks = [[67, 69, 108, 151, 337, 299, 297, 338, 10, 109, 67],
-                 [70, 156, 143, 111, 35, 124, 70],
-                 [276, 300, 383, 372, 340, 265, 353, 276]]
+    # Instantiate the threaded tracker
+    tracker = ThreadedTracker(use_optical_flow=True, use_moving_average=True, landmark_detector='mediapipe',
+                              num_landmarks=468)
+    tracker.start()
 
-    masknum = len(masks)
+    # Instantiate the mask generator for the main thread
+    mask_generator = MaskGenerator()
 
-    # Pre-allocate arrays for frame storage
-    frame_height, frame_width = frame.shape[:2]
-    video_length = 200
-    mask_array = np.zeros((video_length, frame_height, frame_width * 2, 3), dtype=np.uint8)
+    # Video capture setup
+    cap = cv.VideoCapture(0)
+    if not cap.isOpened():
+        print("Error: Could not open video stream.")
+        tracker.stop()
+        return
 
-    frame_idx = 0
-    print("Processing frames...")
+    latest_landmarks = None
 
-    # Process each frame
-    while cap.isOpened():
+    # --- 2. Main Loop ---
+    while True:
         ret, frame = cap.read()
-        if frame is None:
+        if not ret:
             break
-        elif frame.ndim == 3 and landmark_detector == 'dlib':
-            frame_disp = frame.copy()
-            frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        face_tracker.process_frame(frame)
+        frame = cv.flip(frame, 1)
 
-        # Use smoothed face tracking
-        img, masked_images, newmasks = face_tracker.ft_lndmrk_outline(frame_idx, frame, masks)
+        # --- A. Pass frame to background thread ---
+        tracker.add_frame_to_process(frame.copy())
 
-        if masked_images is None:
-            # No face detected, skip this frame
-            continue
+        # --- B. Get latest results from background thread (non-blocking) ---
+        result = tracker.get_latest_result()
+        if result is not None:
+            _, frame_result_obj = result
+            if frame_result_obj:
+                # Correctly extract the landmark data from the result object
+                latest_landmarks = frame_result_obj
 
-        # Create visual masks for each ROI
-        viseye_lst = []
-        for i in range(masknum):
-            if i < len(newmasks):
-                newmask = newmasks[i]
-            else:
-                newmask = np.zeros_like(frame)
+        # --- C. Render visualization on the main thread ---
+        vis_img, _, newmasks_list = render_visualization(
+            frame,
+            latest_landmarks,
+            MASKS_TO_APPLY,
+            mask_generator
+        )
 
-            newmask = newmask.astype(bool)
-
-            # Process image for visualization
-            maskedimg = frame * newmask
-            viseye_lst.append(maskedimg)
-
-        # Create colored visualization
-        if frame.dtype == np.float32:
-            print('normalizin frame')
-            frame_cv = ft.normalize_frame(frame, np.zeros_like(frame))
+        # --- D. Generate and display the colored mask visualization ---
+        if newmasks_list:
+            gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            colored_masks_display = colored_mask_viseye(newmasks_list, gray_frame)
+            # Combine the two views side-by-side
+            combined_view = np.hstack((vis_img, colored_masks_display))
+            cv.imshow('Live Tracking and Masks', combined_view)
         else:
-            frame_cv = frame
-        if 'frame_disp' in locals():
-            viseye = ft.visualizations.colored_mask_viseye(viseye_lst, frame_disp)
-        else:
-            viseye = ft.visualizations.colored_mask_viseye(viseye_lst, img)
-        viseye = np.hstack((img, viseye))
+            # If no masks, just show the main tracking view
+            cv.imshow('Live Tracking and Masks', vis_img)
 
-        # Display frame
-        cv.imshow("Face Tracking Demo", viseye)
-        if frame_idx % 60 == 0 and frame_idx != 0:
-            fps = frame_idx / int(time.time() - start_time)
-            print(f'Elapsed time: {int(time.time() - start_time)}, FPS: {fps:.2f}fps')
-
-        # Store frame
-        if frame_idx < video_length:
-            mask_array[frame_idx] = viseye
-            frame_idx += 1
-        else:
-            break
-
-        # Check for quit
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
 
+    # --- 3. Cleanup ---
+    print("Exiting...")
+    tracker.stop()
+    cap.release()
     cv.destroyAllWindows()
 
-    # Save output video
-    print("Saving demo video...")
-    frame_count = frame_idx
-    mask_lst = [mask_array[i] for i in range(frame_count)]
-    ft.general.list_to_video(mask_lst, f'{output_name}_visual_demo')
-    print(f"Demo complete! Output saved as: {output_name}_visual_demo")
-    print(f"Time taken: {time.time() - start_time}s, estimated fps: {frame_count/time.time() - start_time}")
-    print(f"Processed {frame_count} frames")
 
-
-if __name__ == "__main__":
-    print("Face Tracking Visual Demo")
-    print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='mediapipe')
+if __name__ == '__main__':
+    run_live_demo()

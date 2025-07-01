@@ -18,8 +18,8 @@ from face_tracking.processing.smoothing import SmoothingEngine
 from face_tracking.core.motion_analysis import MotionAnalyzer
 from face_tracking.utils import TrackingHistory, MaskGenerator
 from face_tracking.config import settings as cfg
-from face_tracking.core.mask_ops import update_mask_positions, update_mask_positions_neighbors
-from face_tracking.utils.visualizations import visualize_landmarks
+# from face_tracking.core.mask_ops import update_mask_positions, update_mask_positions_neighbors
+# from face_tracking.utils.visualizations import visualize_landmarks
 
 class FrameResult:
     """Encapsulates the result of processing a single frame."""
@@ -56,6 +56,7 @@ class FaceTracker:
 
         # Core components - single responsibility principle
         self.detector = self._create_detector(landmark_detector)
+        self.msk_gen = MaskGenerator()
         self.optical_flow = OpticalFlowTracker(lk_params=cfg.LK_PARAMS) if use_optical_flow else None
         self.smoother = SmoothingEngine() if use_moving_average else None
         self.motion_analyzer = MotionAnalyzer()
@@ -374,45 +375,3 @@ class FaceTracker:
         return None
 
     # face_tracking/core/face_tracker.py
-    def ft_lndmrk_outline(self, frame_index: int, frame: np.ndarray,
-                          masks: List[List[int]], org_landmarks=None) -> Tuple:
-        """
-        Optimized landmark outline processing.
-        Public API maintained for compatibility.
-        """
-        # np.asarray is more efficient as it avoids copying data if not necessary
-        frame = np.asarray(frame)
-
-        # Normalize once if needed (no change here, was already efficient)
-        img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame)) \
-            if frame.dtype == np.float32 else frame
-
-        # Get landmarks with fallback
-        dst_landmarks = (self.get_smoothed_landmarks(frame_index) or
-                         self.get_original_landmarks(frame_index))
-
-        if dst_landmarks is None:
-            warnings.warn(f"No landmarks found for frame_index: {frame_index}")
-            return img_normalized, None, None
-
-        # Apply masks
-        if org_landmarks is None:
-            # The optimizations in MaskGenerator.apply_masks provide the speedup here
-            msk_gen = MaskGenerator()
-            masked_images, newmasks_list = msk_gen.apply_masks(img_normalized, dst_landmarks, masks)
-        else:
-            # This part of the logic remains unchanged as it handles a different use case
-            if self.use_neighbors:
-                newmasks_list, self.mask_neighbors = update_mask_positions_neighbors(
-                    org_landmarks, dst_landmarks, masks, self.num_neighbors, self.mask_neighbors
-                )
-            else:
-                newmasks_list = update_mask_positions(org_landmarks, dst_landmarks, masks)
-
-            # Using a generator expression can be slightly more memory-efficient
-            masked_images = [img_normalized * mask for mask in newmasks_list]
-
-        # Efficient landmark visualization
-        vis_img = visualize_landmarks(img_normalized.copy(), dst_landmarks)
-
-        return vis_img, masked_images, newmasks_list

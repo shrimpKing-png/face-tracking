@@ -5,11 +5,13 @@ Created on Wed Jun 26 01:14:18 2025
 Last Update: 25JUNE2025
 @author: GPAULL
 """
-
+from typing import Tuple, Optional, List
+from face_tracking.processing import frame_processor
 import cv2 as cv
 import numpy as np
 from face_tracking.config import settings as cfg
 from face_tracking.processing.landmark_processor import landmarks_to_points
+from face_tracking.utils import MaskGenerator
 
 
 def visualize_landmarks(img: np.ndarray, landmarks) -> np.ndarray:
@@ -111,6 +113,44 @@ def _render_color_key_optimized(viseye_bgr, num_masks, frame_height, mask_colors
 
         # Label text
         cv.putText(viseye_bgr, f"Mask {i}", (45, y_pos + 5), font, 0.5, white, 1)
+
+def render_visualization(
+        frame: np.ndarray,
+        landmarks,
+        masks: List[List[int]],
+        mask_generator: MaskGenerator
+) -> Tuple[np.ndarray, Optional[List[np.ndarray]], Optional[List[np.ndarray]]]:
+    """
+    Renders tracking visualizations on a frame using the optimized MaskGenerator logic.
+
+    Args:
+        frame: The original video frame to draw on.
+        landmarks: The landmark data (dlib or mediapipe object) for the frame.
+        masks: A list of lists, where each inner list contains landmark indices.
+        mask_generator: An instance of the MaskGenerator class.
+
+    Returns:
+        A tuple containing:
+        - The frame with landmarks visualized.
+        - A list of masked images.
+        - A list of the corresponding mask arrays.
+    """
+    if landmarks is None:
+        return frame, None, None
+
+    img_normalized = frame_processor.normalize_frame(frame, np.ones_like(frame)) \
+        if frame.dtype != np.uint8 else frame
+
+    # Apply masks using the provided generator, as done in the old function
+    masked_images, newmasks_list = mask_generator.apply_masks(img_normalized, landmarks, masks)
+
+    # Create a copy for drawing to avoid modifying the array used in masking
+    vis_img = img_normalized.copy()
+
+    # Efficient landmark visualization
+    vis_img = visualize_landmarks(vis_img, landmarks)
+
+    return vis_img, masked_images, newmasks_list
 
 # def plot_landmarks_on_frame(frame: np.ndarray, landmarks) -> np.ndarray:
 #     """ Causes issues with framevalues for some odd reason. May add back later

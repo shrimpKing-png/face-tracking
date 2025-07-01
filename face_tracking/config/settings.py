@@ -28,7 +28,7 @@ HISTORY_WINDOW = 30
 # Number of past frames to include in the weighted moving average calculation.
 # This directly controls the "smoothness" of the landmark positions.
 SMOOTHING_WINDOW = 10
-DECAY_FACTOR = 0.9
+DECAY_FACTOR = 0.2
 
 # --- Feature Toggles ---
 # These booleans act as switches to enable or disable major features of the tracker.
@@ -51,30 +51,24 @@ LK_PARAMS = dict(
 # --- Motion Analysis and Weighting ---
 # The z-score threshold for detecting unusually small motion (jitter).
 # A lower value makes the detection more sensitive.
-Z_SCORE_THRESHOLD = 2.0
+Z_SCORE_THRESHOLD = 1.0
 
 # Weights for blending dlib's raw detection with the optical flow prediction.
 # Giving a higher weight to optical flow can result in smoother tracking, but
 # might drift over time if dlib detection is lost.
-LANDMARK_WEIGHT = 1
-FLOW_WEIGHT = 0
+LANDMARK_WEIGHT = 0.9
+FLOW_WEIGHT = 0.1
 
 # Special weights applied when motion is very small (below the z-score threshold).
 # This is a smart trick to reduce jitter by relying more heavily on the smoother
 # optical flow prediction when the face is relatively still.
-LOW_MOTION_LANDMARK_WEIGHT = 1
-LOW_MOTION_FLOW_WEIGHT = 0
+LOW_MOTION_LANDMARK_WEIGHT = 0.98
+LOW_MOTION_FLOW_WEIGHT = 0.02
 
 # Colors for mask visualization.
 MASK_COLORS = np.array([
-    [0, 0, 255],  # Red
-    [0, 255, 0],  # Green
-    [255, 0, 0],  # Blue
-    [0, 255, 255],  # Yellow
-    [255, 0, 255],  # Magenta
-    [255, 255, 0],  # Cyan
-    [128, 0, 128],  # Purple
-    [255, 165, 0],  # Orange
-    [0, 128, 128],  # Teal
-    [128, 128, 0],  # Olive
-], dtype=np.uint8)
+        (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0),
+        (0, 255, 255), (255, 0, 255), (192, 192, 192), (128, 128, 128),
+        (128, 0, 0), (128, 128, 0), (0, 128, 0), (128, 0, 128),
+        (0, 128, 128), (0, 0, 128)
+    ], dtype=np.uint8)

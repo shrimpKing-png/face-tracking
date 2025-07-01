@@ -8,16 +8,17 @@ import cv2 as cv
 import numpy as np
 import face_tracking as ft
 import time
+import itertools
+from multiprocessing import Pool
 
+def process_video_permutation(args):
+    """
+    Worker function for multiprocessing.
+    Processes one video with one permutation of settings.
+    """
+    videopath, use_of, use_ma, landmark_detector, num_landmarks = args
+    print(f"Processing {videopath} with OF={use_of}, MA={use_ma}")
 
-def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=False):
-    """
-    Demo version that just creates visual output with face tracking
-    """
-    videopath = ft.utils.filebrowser(True)
-    if videopath == '':
-        print("No video selected. Exiting.")
-        return
     start_time = time.time()
     # Setup output directory
     filename = os.path.basename(videopath)
@@ -29,13 +30,13 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
     # Load frames
     frames = ft.general.video_to_list(videopath)
     if not frames:
-        print("No frames loaded. Exiting.")
+        print(f"No frames loaded for {videopath}. Skipping.")
         return
 
-    print(f"Loaded {len(frames)} frames")
+    print(f"Loaded {len(frames)} frames for {videopath}")
 
     # Initialize face tracker
-    print("Initializing face tracker...")
+    print(f"Initializing face tracker for {videopath}...")
     face_tracker = ft.FaceTracker(use_optical_flow=use_of, use_moving_average=use_ma, landmark_detector=landmark_detector, num_landmarks=num_landmarks)
     # initialize the face_tracker with first frame
     face_tracker.process_frame(frames[0])
@@ -45,7 +46,7 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
     if len(frame.shape) != 2:
         frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    # Use pre-defined ROI masks (you can modify this section)
+    # Use pre-defined ROI masks
     print("Loading ROI masks...")
     try:
         import csv
@@ -59,10 +60,10 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
         # Create some default facial ROI masks if file doesn't exist
         first_landmarks = face_tracker.get_original_landmarks(0)
         if first_landmarks is None:
-            print("No face detected in first frame. Exiting.")
+            print(f"No face detected in first frame of {videopath}. Skipping.")
             return
 
-        # Create a simple mask around eye region (landmarks 36-47 typically)
+        # Create a simple mask around eye region
         masks = [[36, 37, 38, 39, 40, 41]]  # Right eye region
         print("Using default eye region mask")
 
@@ -74,7 +75,7 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
     mask_array = np.zeros((num_frames, frame_height, frame_width * 2, 3), dtype=np.uint8)
 
     frame_count = 0
-    print("Processing frames...")
+    print(f"Processing frames for {videopath}...")
     mask_generator = ft.MaskGenerator()
 
     # Process each frame
@@ -109,35 +110,64 @@ def demo_face_tracking(landmark_detector, num_landmarks=54, use_of=True, use_ma=
         viseye = ft.visualizations.colored_mask_viseye(viseye_lst, frame)
         viseye = np.hstack((img, viseye))
 
-        # Display frame
-        cv.imshow("Face Tracking Demo", viseye)
-
         # Store frame
         if frame_count < num_frames:
             mask_array[frame_count] = viseye
             frame_count += 1
 
-        # Check for quit
-        if cv.waitKey(1) & 0xFF == ord('q'):
-            break
-
-        # Progress update
-        if frame_idx % 30 == 0:
-            print(f"Processed frame {frame_idx}/{len(frames)}")
-
-    cv.destroyAllWindows()
-
     # Save output video
-    print("Saving demo video...")
+    print(f"Saving demo video for {videopath}...")
     mask_lst = [mask_array[i] for i in range(frame_count)]
     face_tracker.get_motion_stats().to_csv(f'{output_name}_motion_stats.csv')
     ft.general.list_to_video(mask_lst, f'{output_name}_visual_demo')
-    print(f"Demo complete! Output saved as: {output_name}_visual_demo")
-    print(f"Time taken: {time.time() - start_time}s, estimated fps: {frame_count/time.time() - start_time}")
-    print(f"Processed {frame_count} frames")
+    print(f"Demo complete for {videopath}! Output saved as: {output_name}_visual_demo")
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    fps = frame_count / elapsed_time if elapsed_time > 0 else 0
+    print(f"Time taken for {videopath} (OF={use_of}, MA={use_ma}): {elapsed_time:.2f}s, estimated fps: {fps:.2f}")
+    print(f"Processed {frame_count} frames for {videopath}")
+
+
+def main():
+    """
+    Main function to run the face tracking demo with multiprocessing.
+    """
+    start_time = time.time()
+    print("Face Tracking Visual Demo")
+    print("This demo creates visual output showing face tracking with ROI masks.")
+    print("Select one or more video files to process. Click 'Cancel' to stop.")
+
+    videopaths = []
+    while True:
+        videopath = ft.utils.filebrowser(True)
+        if videopath == '':
+            break
+        videopaths.append(videopath)
+
+    if not videopaths:
+        print("No videos selected. Exiting.")
+        return
+
+    landmark_detector = 'dlib'
+    num_landmarks = 54
+
+    # All possible permutations of use_of and use_ma
+    permutations = list(itertools.product([True, False], repeat=2))
+
+    # Create a list of arguments for the worker function
+    tasks = []
+    num_permutations = len(permutations) * len(videopaths)
+    for videopath in videopaths:
+        for use_of, use_ma in permutations:
+            tasks.append((videopath, use_of, use_ma, landmark_detector, num_landmarks))
+
+    # Use multiprocessing to run tasks in parallel
+    with Pool(processes=os.cpu_count()) as pool:
+        pool.map(process_video_permutation, tasks)
+
+    print("\nAll processing complete.")
+    print(f"Total processing time: {time.time() - start_time:.2f}s. Num_permutations: {num_permutations}")
 
 
 if __name__ == "__main__":
-    print("Face Tracking Visual Demo")
-    print("This demo creates visual output showing face tracking with ROI masks")
-    demo_face_tracking(use_of=False, use_ma=False, landmark_detector='dlib', num_landmarks=54)
+    main()
