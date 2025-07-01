@@ -18,7 +18,7 @@ class MediaPipeDetector:
     """
 
     def __init__(self, static_image_mode=False, max_num_faces=1, refine_landmarks=False,
-                 min_detection_con=0.1, min_tracking_con=0.5, num_landmarks=468):
+                 min_detection_con=0.1, min_tracking_con=0.1, num_landmarks=468):
         """
         Initialize MediaPipe FaceMesh detector.
 
