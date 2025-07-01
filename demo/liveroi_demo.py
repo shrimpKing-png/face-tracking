@@ -102,32 +102,35 @@ def run_live_demo():
         # --- B. Get latest results from background thread (non-blocking) ---
         result = tracker.get_latest_result()
         if result is not None:
-            _, frame_result_obj = result
+            processed_frame, frame_result_obj = result
             if frame_result_obj:
                 # Correctly extract the landmark data from the result object
                 latest_landmarks = frame_result_obj
 
-        # --- C. Render visualization on the main thread ---
-        vis_img, _, newmasks_list = render_visualization(
-            frame,
-            latest_landmarks,
-            MASKS_TO_APPLY,
-            mask_generator
-        )
+            # --- C. Render visualization on the main thread ---
+            vis_img, _, newmasks_list = render_visualization(
+                processed_frame,
+                latest_landmarks,
+                MASKS_TO_APPLY,
+                mask_generator
+            )
 
-        # --- D. Generate and display the colored mask visualization ---
-        if newmasks_list:
-            gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            colored_masks_display = colored_mask_viseye(newmasks_list, gray_frame)
-            # Combine the two views side-by-side
-            combined_view = np.hstack((vis_img, colored_masks_display))
-            cv.imshow('Live Tracking and Masks', combined_view)
-        else:
-            # If no masks, just show the main tracking view
-            cv.imshow('Live Tracking and Masks', vis_img)
+            # --- D. Generate and display the colored mask visualization ---
+            if newmasks_list:
+                if frame.ndim !=2:
+                    gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                    colored_masks_display = colored_mask_viseye(newmasks_list, gray_frame)
+                else:
+                    colored_masks_display = colored_mask_viseye(newmasks_list, frame)
+                # Combine the two views side-by-side
+                combined_view = np.hstack((vis_img, colored_masks_display))
+                cv.imshow('Live Tracking and Masks', combined_view)
+            else:
+                # If no masks, just show the main tracking view
+                cv.imshow('Live Tracking and Masks', vis_img)
 
-        if cv.waitKey(1) & 0xFF == ord('q'):
-            break
+            if cv.waitKey(1) & 0xFF == ord('q'):
+                break
 
     # --- 3. Cleanup ---
     print("Exiting...")
