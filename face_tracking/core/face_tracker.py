@@ -112,7 +112,7 @@ class FaceTracker:
         """
         # Preparation phase
         normalized_frame = self._prepare_frame(frame)
-        raw_landmarks = self._detect_landmarks(normalized_frame)
+        raw_landmarks = self.detector.extract_faces(normalized_frame)[0]
 
         # Processing phase
         if not self._is_initialized:
