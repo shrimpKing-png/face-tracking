@@ -266,8 +266,8 @@ class ThreadedCamera:
 
         self.cap.set(cv.CAP_PROP_BUFFERSIZE, 1)
 
-        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
-        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
 
         # Set higher FPS if supported
         self.cap.set(cv.CAP_PROP_FPS, 30)
