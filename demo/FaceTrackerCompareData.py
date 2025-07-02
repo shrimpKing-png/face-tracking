@@ -148,8 +148,13 @@ def main():
         print("No videos selected. Exiting.")
         return
 
-    landmark_detector = 'dlib'
-    num_landmarks = 54
+    landmark_detector = 'mediapipe'
+    if landmark_detector == 'mediapipe':
+        num_landmarks = 468
+    elif landmark_detector == 'dlib':
+        num_landmarks = 54
+    else:
+        num_landmarks = 68
 
     # All possible permutations of use_of and use_ma
     permutations = list(itertools.product([True, False], repeat=2))
@@ -159,6 +164,8 @@ def main():
     num_permutations = len(permutations) * len(videopaths)
     for videopath in videopaths:
         for use_of, use_ma in permutations:
+            if use_of == True:
+                continue
             tasks.append((videopath, use_of, use_ma, landmark_detector, num_landmarks))
 
     # Use multiprocessing to run tasks in parallel
