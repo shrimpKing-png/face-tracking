@@ -28,7 +28,7 @@ HISTORY_WINDOW = 30
 # Number of past frames to include in the weighted moving average calculation.
 # This directly controls the "smoothness" of the landmark positions.
 SMOOTHING_WINDOW = 10
-DECAY_FACTOR = 0.2
+DECAY_FACTOR = 0.4
 
 # --- Feature Toggles ---
 # These booleans act as switches to enable or disable major features of the tracker.
