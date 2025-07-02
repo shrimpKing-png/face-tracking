@@ -7,7 +7,7 @@ Created on Mon Jun 30 2025
 import threading
 import queue
 from typing import Optional
-
+import time
 from face_tracking.core.face_tracker import FaceTracker, FrameResult
 from face_tracking.utils.visualizations import colored_mask_viseye
 import numpy as np
@@ -224,3 +224,128 @@ class ThreadedFrameProcessor:
             self.processing_thread.join()
         print("Frame processor thread stopped.")
 
+
+class ThreadedCamera:
+    """
+    Captures frames from camera in a separate thread with buffering
+    to prevent blocking on frame reads.
+    """
+
+    def __init__(self, src=0, buffer_size=2):
+        """
+        Initialize threaded camera capture.
+
+        Args:
+            src: Camera source (0 for default webcam)
+            buffer_size: Number of frames to buffer (2-3 is usually optimal)
+        """
+        self.src = src
+        self.buffer_size = buffer_size
+
+        # Initialize camera
+        self.cap = cv.VideoCapture(src)
+        if not self.cap.isOpened():
+            raise RuntimeError(f"Could not open camera {src}")
+
+        # Optimize camera settings for performance
+        self._optimize_camera_settings()
+
+        # Threading components
+        self.frame_queue = queue.Queue(maxsize=buffer_size)
+        self._stop_event = threading.Event()
+        self._capture_thread = threading.Thread(target=self._capture_loop, daemon=True)
+
+        # Statistics
+        self.frames_captured = 0
+        self.frames_dropped = 0
+        self.last_fps_time = time.time()
+
+    def _optimize_camera_settings(self):
+        """Optimize camera settings for better performance."""
+        # Set buffer size to minimum to reduce latency
+
+        self.cap.set(cv.CAP_PROP_BUFFERSIZE, 1)
+
+        self.cap.set(cv.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
+
+        # Set higher FPS if supported
+        self.cap.set(cv.CAP_PROP_FPS, 30)
+
+        # Disable auto-exposure for more consistent timing (optional)
+        # self.cap.set(cv.CAP_PROP_AUTO_EXPOSURE, 0.25)  # Manual mode
+
+        print(f"Camera initialized:")
+        print(f"  FPS: {self.cap.get(cv.CAP_PROP_FPS)}")
+        print(f"  Buffer size: {int(self.cap.get(cv.CAP_PROP_BUFFERSIZE))}")
+
+    def _capture_loop(self):
+        """Main capture loop running in background thread."""
+        print("Camera capture thread started...")
+
+        while not self._stop_event.is_set():
+            ret, frame = self.cap.read()
+
+            if not ret:
+                print("Failed to read frame from camera")
+                continue
+
+            self.frames_captured += 1
+
+            # Try to put frame in queue (non-blocking)
+            try:
+                # If queue is full, remove old frame and add new one
+                if self.frame_queue.full():
+                    try:
+                        self.frame_queue.get_nowait()  # Discard old frame
+                        self.frames_dropped += 1
+                    except queue.Empty:
+                        pass
+
+                self.frame_queue.put(frame, block=False)
+
+            except queue.Full:
+                self.frames_dropped += 1
+
+    def start(self):
+        """Start the capture thread."""
+        if not self._capture_thread.is_alive():
+            self._capture_thread.start()
+
+    def read(self) -> tuple[bool, Optional[np.ndarray]]:
+        """
+        Read the latest frame from the buffer.
+
+        Returns:
+            (success, frame) tuple similar to cv.VideoCapture.read()
+        """
+        try:
+            frame = self.frame_queue.get_nowait()
+            return True, frame
+        except queue.Empty:
+            return False, None
+
+    def get_fps_stats(self):
+        """Get capture statistics."""
+        current_time = time.time()
+        elapsed = current_time - self.last_fps_time
+
+        if elapsed >= 1.0:  # Update every second
+            capture_fps = self.frames_captured / elapsed if elapsed > 0 else 0
+            drop_rate = (self.frames_dropped / max(1, self.frames_captured)) * 100
+
+            self.frames_captured = 0
+            self.frames_dropped = 0
+            self.last_fps_time = current_time
+
+            return capture_fps, drop_rate
+        return None, None
+
+    def stop(self):
+        """Stop capture and cleanup."""
+        print("Stopping camera capture...")
+        self._stop_event.set()
+        if self._capture_thread.is_alive():
+            self._capture_thread.join()
+        self.cap.release()
+        print("Camera capture stopped.")

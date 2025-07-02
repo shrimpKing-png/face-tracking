@@ -10,13 +10,15 @@ import csv
 import warnings
 import time
 from face_tracking.utils.mask_generator import MaskGenerator
-from face_tracking.core.threading import ThreadedTracker, ThreadedFrameProcessor
+from face_tracking.core.threading import ThreadedTracker, ThreadedFrameProcessor, ThreadedCamera
 from face_tracking.utils.visualizations import render_visualization
 
 
 # --- Example Usage in your main application (e.g., liveroi_demo.py) ---
 
 def run_live_demo():
+    camera = ThreadedCamera()
+    camera.start()
     frame_index = 0
     """Example main loop for a live ROI demo."""
     # --- 1. Initialization ---
@@ -31,18 +33,14 @@ def run_live_demo():
         warnings.warn("'landmark_rois.csv' not found. No masks will be applied.")
         MASKS_TO_APPLY = []
 
-    tracker = ThreadedTracker(use_optical_flow=False, use_moving_average=True, landmark_detector='mediapipe',
+    tracker = ThreadedTracker(use_optical_flow=True, use_moving_average=True, landmark_detector='mediapipe',
                               num_landmarks=468)
     tracker.start()
     frame_processor = ThreadedFrameProcessor()
     frame_processor.start()
 
     mask_generator = MaskGenerator()
-    cap = cv.VideoCapture(0)
-    if not cap.isOpened():
-        print("Error: Could not open video stream.")
-        tracker.stop()
-        return
+    cam_fps = int(camera.cap.get(cv.CAP_PROP_FPS))
 
     # Store the latest valid visualization image
     latest_vis_img = None
@@ -50,16 +48,15 @@ def run_live_demo():
 
     # --- 2. Main Loop ---
     start_time = time.time()
+    last_frame_time = 0
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        frame = cv.flip(frame, 1)
-
+        ret = False
+        ret, frame = camera.read()
         # --- A. Pass the latest frame to the background thread ---
-        tracker.add_frame_to_process(frame.copy())
+        if ret:
+            frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            frame = cv.flip(frame, 1)
+            tracker.add_frame_to_process(frame.copy())
 
         # --- B. Get the latest processed result ---
         result = tracker.get_latest_result()
@@ -88,12 +85,13 @@ def run_live_demo():
         # --- E. Get latest colored mask result ---
         colored_result = frame_processor.get_latest_result()
         if colored_result is not None:
+            if frame_index % 60 == 0:
+                print(f'FPS: {frame_index / (time.time() - start_time)}')
             frame_index += 1
             latest_colored_masks = colored_result
             colored_result = None
 
         # --- F. Display the most recently generated visualizations ---
-        display_frame = frame  # Default to showing the live camera feed
         if latest_vis_img is not None:
             display_frame = latest_vis_img  # Show the latest tracking visualization if available
             if latest_colored_masks is not None:
@@ -101,9 +99,7 @@ def run_live_demo():
                 display_frame = np.hstack((latest_vis_img, latest_colored_masks))
                 latest_vis_img = None
 
-        cv.imshow('Live Tracking and Masks', display_frame)
-        if frame_index % 60 == 0:
-            print(f'FPS: {frame_index / (time.time() - start_time)}')
+            cv.imshow('Live Tracking and Masks', display_frame)
 
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
@@ -112,7 +108,6 @@ def run_live_demo():
     print("Exiting...")
     tracker.stop()
     frame_processor.stop()  # Ensure the frame processor is also stopped
-    cap.release()
     cv.destroyAllWindows()
 
 
