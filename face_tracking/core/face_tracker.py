@@ -173,6 +173,7 @@ class FaceTracker:
         final_points = self._compute_tracking_result(frame, raw_landmarks, prev_points)
 
         if final_points is not None:
+            final_points = final_points.astype(int)
             return self._finalize_tracking_success(final_points, frame, prev_points, raw_landmarks)
         else:
             return self._handle_tracking_loss(raw_landmarks)
